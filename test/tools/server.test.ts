@@ -114,6 +114,10 @@ describe('MCP server', () => {
         '- concept/permissions [concept] Permission system\n' +
         '  Roles grant actions; groups hold roles. · 2 links · never verified',
     );
+    expect((await call('search', { query: 'permission billing', level: 'title' })).text).toBe(
+      'No node matched all words of "permission billing". 1 partial match, check before relying on them:\n' +
+        '- concept/permissions [concept] Permission system',
+    );
 
     const got = (await call('get', { keys: ['concept/permissions'], neighbors: true })).text;
     expect(got).toMatch(/^concept\/permissions \[concept\] Permission system {3}v1 · updated \d{4}-\d{2}-\d{2}\n/);

@@ -24,10 +24,10 @@ export function registerSearch({ server, store, ctx }: Deps): void {
         if (out.total === 0) {
           return `No results for "${out.query}". Try fewer or different words.`;
         }
-        const header =
-          out.total > out.hits.length
-            ? `${out.hits.length} of ${out.total} results for "${out.query}":`
-            : `${out.total} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
+        const count = out.total > out.hits.length ? `${out.hits.length} of ${out.total}` : `${out.total}`;
+        const header = out.partial
+          ? `No node matched all words of "${out.query}". ${count} partial match${out.total === 1 ? '' : 'es'}, check before relying on them:`
+          : `${count} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
         const entries = out.hits.map((h) => `- ${renderStub(ctx, h.node, input.level, { edgeCount: h.edgeCount })}`);
         const lines = [header, ...entries];
         if (out.total > out.hits.length) {

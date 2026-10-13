@@ -25,7 +25,7 @@ The preset (`minimal`, `standard`, `verbose`), intro, house rules and pinned key
 
 | Input | Type | Default | Notes |
 |---|---|---|---|
-| `query` | string | required | Plain words; matches word stems. Every word must match, and if nothing does, any word may. |
+| `query` | string | required | Plain words; matches word stems. Question words (what, is, how, the...) are dropped. Every word must match; if nothing does, any word may, and the header says `No node matched all words`. |
 | `type` | string | any | Normalized like writes. |
 | `tag` | string | any | |
 | `level` | render level | `summary` | |
@@ -40,6 +40,7 @@ Ranked by FTS5 relevance (title weighs most), with at most a 10% boost for nodes
 - ...
 4 more: raise limit or add type.
 ```
+A miss on every word falls back to partial matches and says so:```No node matched all words of "permission billing". 1 partial match, check before relying on them:- concept/permissions [concept] Permission system```
 
 ## get
 "Fetch one or more nodes by key. Optionally include directly linked nodes as titles."

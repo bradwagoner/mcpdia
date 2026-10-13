@@ -4,7 +4,7 @@ import { UserError } from '../../src/core/errors.js';
 import { get } from '../../src/core/get.js';
 import { link } from '../../src/core/link.js';
 import { orient } from '../../src/core/orient.js';
-import { search } from '../../src/core/search.js';
+import { search, searchTerms } from '../../src/core/search.js';
 import { upsert } from '../../src/core/upsert.js';
 import type { GraphStore } from '../../src/store/GraphStore.js';
 import { SqliteStore } from '../../src/store/sqlite/SqliteStore.js';
@@ -79,7 +79,24 @@ describe('search', () => {
     await upsert(ctx, store, { type: 'concept', title: 'Billing pipeline' });
     const out = await search(ctx, store, { query: 'billing permissions', level: 'summary', limit: 10 });
     expect(out.total).toBe(2);
+    expect(out.partial).toBe(true);
     expect(out.hits.every((h) => h.edgeCount === 0)).toBe(true);
+  });
+
+  it('is not partial when every word matches', async () => {
+    await upsert(ctx, store, perms);
+    expect((await search(ctx, store, { query: 'permission roles', level: 'title', limit: 10 })).partial).toBe(false);
+  });
+
+  it('drops question words unless they are all there is', () => {
+    expect(searchTerms('What is left for v0.1?')).toEqual(['left', 'v0', '1']);
+    expect(searchTerms('how to')).toEqual(['how', 'to']);
+  });
+
+  it('reports a miss as empty, not partial', async () => {
+    await upsert(ctx, store, perms);
+    const out = await search(ctx, store, { query: 'what about invoices', level: 'title', limit: 10 });
+    expect(out).toMatchObject({ total: 0, partial: false });
   });
 
   it('rejects a query with no words', async () => {
