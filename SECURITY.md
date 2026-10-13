@@ -23,7 +23,7 @@ In v0.1 MCPedia runs in solo mode (ADR 0006):
 - The server speaks MCP over **stdio**. It opens no network port and makes no outbound requests.
 - The graph is a **SQLite file on your machine**, `~/.mcpedia/mcpedia.db` by default or the path in `MCPEDIA_DB`. Anyone who can read that file can read the graph, and anyone who can write it can change it. Protect it like any other file in your home directory.
 - There is **no authentication**. The trust boundary is your user account and the MCP clients you connect. Every connected client reads and writes the same graph.
-<!-- QUESTION(KAN-7): once KAN-6 (JSONL export) merges, add: "`mcpedia export` writes the whole graph as JSONL. Treat the export file with the same care as the database." -->
+- `mcpedia export` writes the whole graph as JSONL. Treat the export file with the same care as the database.
 
 Keep secrets out of the graph. API keys, passwords and personal data do not belong in nodes; there is no per-node access control and history is never purged.
 
