@@ -174,6 +174,26 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         author: 'local',
       });
 
+      it('lists every node by namespace, any status, and the active edges', async () => {
+        const a = await store.createNode(node());
+        const b = await store.createNode(node({ key: 'concept/roles', title: 'Roles' }));
+        await store.createNode(node({ namespace: 'other', key: 'concept/elsewhere', title: 'Elsewhere' }));
+        await store.setStatus(b.id, 'deleted', 'local');
+        await store.upsertEdge(edge('concept/permissions', 'concept/roles'));
+        await store.upsertEdge(edge('concept/permissions', 'concept/audit-log', 'references'));
+
+        const nodes = await store.listNodes(['default']);
+        expect(nodes.map((n) => [n.key, n.status])).toEqual([
+          ['concept/permissions', 'active'],
+          ['concept/roles', 'deleted'],
+        ]);
+        expect(nodes[0]!.aliases).toEqual(a.aliases);
+        const edges = await store.listEdges(['default']);
+        expect(edges.map((e) => e.toKey).sort()).toEqual(['concept/audit-log', 'concept/roles']);
+        expect(await store.listNodes([])).toEqual([]);
+        expect(await store.listEdges(['other'])).toEqual([]);
+      });
+
       it('upserts on (from, to, type)', async () => {
         await store.createNode(node());
         await store.createNode(node({ key: 'concept/roles', title: 'Roles' }));

@@ -149,6 +149,16 @@ CREATE TABLE schema_migrations (
 
 Search is a method on `GraphStore`, so its implementation is private to each adapter. In SQLite it is an FTS5 virtual table over title, summary, body, aliases, and tags, kept in sync by triggers. In Postgres it becomes a generated `tsvector` column with a GIN index. Nothing above the store layer depends on either.
 
+### JSONL export format
+
+`mcpedia export [--namespace ns]... [--out file]` writes the graph as JSON Lines (stdout when `--out` is omitted). It is store-agnostic: the core builds it from `GraphStore.listNodes` and `listEdges`, and v0.2 import reads it back.
+
+1. One `header` line: `{"kind":"header","format":"mcpedia-jsonl","version":1,"exportedAt","namespaces","nodes","edges"}`.
+2. One `node` line per node in the namespaces, **any status**, oldest first, so supersede chains and soft deletes survive. Fields are the node record in camelCase (`id`, `namespace`, `key`, `type`, `title`, `summary`, `body`, `properties`, `aliases`, `tags`, `status`, `supersededBy`, `version`, `source`, `author`, `updatedBy`, `createdAt`, `updatedAt`, `lastVerifiedAt`, feedback counters).
+3. One `edge` line per **active** edge whose source is in the namespaces: `fromNamespace`, `fromKey`, `toNamespace`, `toKey`, the nullable resolved ids, `type`, `note`, `version`, `author`, timestamps.
+
+Nodes come before edges so an importer can create them first. Importers should match on `(namespace, key)`, not on `id` (ADR 0003). `node_versions` history is not exported yet.
+
 ### Reserved for later (not in `001_init`)
 
 ```sql

@@ -325,6 +325,27 @@ export class SqliteStore implements GraphStore {
     return new Map(rows.map((r) => [r.id, r.count]));
   }
 
+  // QUESTION(KAN-6): hydrate() binds one parameter per id, so a graph past
+  // SQLite's variable limit (32766) would need paging here. Fine for v0.1 sizes?
+  async listNodes(namespaces: string[]): Promise<NodeRecord[]> {
+    if (namespaces.length === 0) return [];
+    const rows = this.db
+      .prepare(`SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, id`)
+      .all(...namespaces) as NodeRow[];
+    return this.hydrate(rows);
+  }
+
+  async listEdges(namespaces: string[]): Promise<EdgeRecord[]> {
+    if (namespaces.length === 0) return [];
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM edges WHERE status = 'active' AND from_namespace IN (${marks(namespaces)})
+         ORDER BY created_at, id`,
+      )
+      .all(...namespaces) as EdgeRow[];
+    return rows.map(toEdge);
+  }
+
   async stats(namespaces: string[]): Promise<GraphStats> {
     if (namespaces.length === 0) return { nodes: 0, nodeTypes: [], edgeTypes: [] };
     const ns = marks(namespaces);
