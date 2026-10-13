@@ -75,7 +75,7 @@ describe('MCP server', () => {
       'concept/access-model (new) supersedes concept/permissions. Moved 1 link.',
     );
     expect((await call('get', { keys: ['concept/permissions'], level: 'title' })).text).toBe(
-      'concept/permissions [concept] Permission system',
+      'concept/permissions [concept] Permission system (superseded by concept/access-model)',
     );
     expect((await call('get', { keys: ['concept/permissions'] })).text).toContain('Superseded by concept/access-model');
 
