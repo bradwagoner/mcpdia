@@ -1,0 +1,8 @@
+dist/
+coverage/
+package-lock.json
+docs/
+*.md
+dist-bench/
+bench/.out/
+bench/results.json
