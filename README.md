@@ -39,6 +39,10 @@ claude mcp add mcpedia -- node /path/to/mcpedia/dist/index.js
 
 The tools are `orient`, `search`, `get`, `upsert`, `annotate`, `link`, `supersede`, `verify`, `delete`, `feedback`, `recent` and `list_types`. Their inputs and outputs are in [`docs/tools.md`](docs/tools.md).
 
+## Security
+
+MCPedia feeds stored text back to LLMs, so treat what it returns as data, not instructions: a node can inform an agent, never authorize it. Today it runs locally over stdio against a SQLite file on your machine, with no network port and no auth; team mode adds token auth and per-namespace permissions. Details in [SECURITY.md](SECURITY.md).
+
 ## Design
 
 The reasoning behind each choice is written down:
