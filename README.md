@@ -47,10 +47,6 @@ The reasoning behind each choice is written down:
 - [Schema](docs/schema.md)
 - [Scope and release diary](docs/SCOPE.md)
 
-## A note on the name
-
-Other, unrelated projects share the name MCPedia. This one is not affiliated with them. See [decision 0009](docs/decisions/0009-project-name.md).
-
 ## License
 
 [MIT](LICENSE)
