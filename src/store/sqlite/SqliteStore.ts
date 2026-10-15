@@ -325,8 +325,8 @@ export class SqliteStore implements GraphStore {
     return new Map(rows.map((r) => [r.id, r.count]));
   }
 
-  // QUESTION(KAN-6): hydrate() binds one parameter per id, so a graph past
-  // SQLite's variable limit (32766) would need paging here. Fine for v0.1 sizes?
+  // hydrate() binds one parameter per id, so this reads up to SQLite's
+  // variable limit (32,766 nodes) in one call. Page it if graphs grow past that.
   async listNodes(namespaces: string[]): Promise<NodeRecord[]> {
     if (namespaces.length === 0) return [];
     const rows = this.db

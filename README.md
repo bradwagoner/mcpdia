@@ -39,6 +39,8 @@ claude mcp add mcpedia -- node /path/to/mcpedia/dist/index.js
 
 The tools are `orient`, `search`, `get`, `upsert`, `annotate`, `link`, `supersede`, `verify`, `delete`, `feedback`, `recent` and `list_types`. Their inputs and outputs are in [`docs/tools.md`](docs/tools.md).
 
+Export the graph as JSON Lines with `node dist/index.js export --out graph.jsonl`. It writes active nodes and their links; add `--namespace ns` to pick namespaces, or `--all-status` to include superseded and deleted nodes. The format is in [`docs/schema.md`](docs/schema.md#jsonl-export-format).
+
 ## Design
 
 The reasoning behind each choice is written down:
