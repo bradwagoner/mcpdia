@@ -14,7 +14,7 @@ Use **MCPedia** anyway.
 - The GitHub repo lives under the author's own account, so there is no repository collision.
 - Publish to npm under the author's own scope, not `@mcpedia`.
 - Host the project page under the author's personal domain (`<domain>/mcpedia`) rather than buying a name-specific domain.
-- The README carries a distinctive tagline and states that the project is not affiliated with others sharing the name.
+- The README carries a distinctive tagline. It no longer has a "not affiliated" note (removed 2026-10-14 to keep the front page focused); this record is the place for that context.
 
 ## Alternatives considered
 - **Cairn / `cairn-mcp`:** best story, but it needs a tagline to explain what it is.

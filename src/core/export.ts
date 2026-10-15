@@ -1,5 +1,5 @@
 import type { Context } from '../context.js';
-import type { EdgeRecord, GraphStore, NodeRecord } from '../store/GraphStore.js';
+import type { EdgeRecord, GraphStore, NodeRecord, NodeStatus } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 
 /** Bump when the line format changes in a way import must know about. */
@@ -11,6 +11,8 @@ export interface ExportHeader {
   version: number;
   exportedAt: string;
   namespaces: string[];
+  /** Node statuses included: `['active']` unless the export asked for every status. */
+  statuses: NodeStatus[];
   nodes: number;
   edges: number;
 }
@@ -20,13 +22,14 @@ export type ExportLine = ExportHeader | ({ kind: 'node' } & NodeRecord) | ({ kin
 export interface ExportInput {
   /** Defaults to every namespace the caller can read. */
   namespaces?: string[];
+  /** Include superseded and deleted nodes too. */
+  allStatus?: boolean;
 }
 
 /**
- * Writes the graph as JSON Lines: one header, then every node (any status, so
- * supersede chains and soft deletes survive), then the active edges. Nodes
- * come before edges so an importer can create them first. The format is in
- * docs/schema.md.
+ * Writes the graph as JSON Lines: one header, then the nodes, then the active
+ * edges. Nodes come before edges so an importer can create them first.
+ * Active nodes only unless `allStatus` is set. The format is in docs/schema.md.
  */
 export async function exportJsonl(
   ctx: Context,
@@ -39,9 +42,8 @@ export async function exportJsonl(
   if (hidden.length) {
     throw new UserError(`Unknown namespace: ${hidden.join(', ')}.`, `readable: ${ctx.namespaces.join(', ')}`);
   }
-  // QUESTION(KAN-6): should export also carry node_versions history and
-  // soft-deleted edges, for a lossless backup? Left out to keep v0.1 small.
-  const nodes = await store.listNodes(namespaces);
+  // Current state only: version history is not exported. For a full backup, copy the database file.
+  const nodes = (await store.listNodes(namespaces)).filter((n) => input.allStatus || n.status === 'active');
   const edges = await store.listEdges(namespaces);
 
   const header: ExportHeader = {
@@ -50,6 +52,7 @@ export async function exportJsonl(
     version: EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     namespaces,
+    statuses: input.allStatus ? ['active', 'superseded', 'deleted'] : ['active'],
     nodes: nodes.length,
     edges: edges.length,
   };

@@ -24,7 +24,7 @@ async function exported(namespaces?: string[]): Promise<ExportLine[]> {
 }
 
 describe('exportJsonl', () => {
-  it('writes a header, then nodes of any status, then edges, one JSON object per line', async () => {
+  it('writes a header, then active nodes, then edges, one JSON object per line', async () => {
     await upsert(ctx, store, { type: 'concept', title: 'Permissions', summary: 'Roles grant actions.' });
     await upsert(ctx, store, { type: 'concept', title: 'Roles' });
     await upsert(ctx, store, { type: 'concept', title: 'Access' });
@@ -32,12 +32,31 @@ describe('exportJsonl', () => {
     await supersede(ctx, store, { old: 'concept/permissions', new: 'concept/access' });
 
     const lines = await exported();
-    expect(lines[0]).toMatchObject({ kind: 'header', format: 'mcpedia-jsonl', version: 1, nodes: 3 });
-    // supersede adds its own edge alongside the depends_on link.
-    expect(lines.map((l) => l.kind)).toEqual(['header', 'node', 'node', 'node', 'edge', 'edge']);
+    expect(lines[0]).toMatchObject({
+      kind: 'header',
+      format: 'mcpedia-jsonl',
+      version: 1,
+      statuses: ['active'],
+      nodes: 2,
+    });
+    // supersede adds its own edge alongside the depends_on link it moved.
+    expect(lines.map((l) => l.kind)).toEqual(['header', 'node', 'node', 'edge', 'edge']);
+    expect(lines.some((l) => l.kind === 'node' && l.key === 'concept/permissions')).toBe(false);
+    expect(lines).toContainEqual(expect.objectContaining({ kind: 'edge', type: 'depends_on', toKey: 'concept/roles' }));
+  });
+
+  it('includes superseded and deleted nodes with allStatus', async () => {
+    await upsert(ctx, store, { type: 'concept', title: 'Permissions', summary: 'Roles grant actions.' });
+    await upsert(ctx, store, { type: 'concept', title: 'Access' });
+    await supersede(ctx, store, { old: 'concept/permissions', new: 'concept/access' });
+
+    const lines: ExportLine[] = [];
+    await exportJsonl(ctx, store, { allStatus: true }, (line) => {
+      lines.push(JSON.parse(line) as ExportLine);
+    });
+    expect(lines[0]).toMatchObject({ statuses: ['active', 'superseded', 'deleted'], nodes: 2 });
     const perms = lines.find((l) => l.kind === 'node' && l.key === 'concept/permissions');
     expect(perms).toMatchObject({ status: 'superseded', summary: 'Roles grant actions.' });
-    expect(lines).toContainEqual(expect.objectContaining({ kind: 'edge', type: 'depends_on', toKey: 'concept/roles' }));
   });
 
   it('refuses a namespace the caller cannot read', async () => {

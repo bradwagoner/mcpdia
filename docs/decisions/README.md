@@ -17,6 +17,7 @@ Short records of the significant design decisions in this project: what we chose
 | 0011 | Compact text responses                                | Accepted |
 | 0012 | Readable keys and normalization rules                 | Accepted |
 | 0013 | Benchmark method                                      | Proposed |
+| 0014 | Graph viewer library: Sigma.js or Cytoscape.js | Accepted |
 
 ## Template
 

@@ -1,0 +1,33 @@
+{
+  "name": "mcpedia-viewer",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Graph viewer for MCPedia, with two renderers: Sigma.js + graphology, and Cytoscape.js. Read-only.",
+  "type": "module",
+  "scripts": {
+    "start": "npm run build && node scripts/serve.mjs",
+    "build": "esbuild viewer=src/main.ts cytoscape=src/cytoscape.ts --bundle --format=esm --target=es2022 --outdir=www",
+    "dev": "node scripts/serve.mjs --watch",
+    "export": "node scripts/export-graph.mjs",
+    "generate": "node scripts/generate.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cytoscape": "3.34.3",
+    "graphology": "0.26.0",
+    "graphology-layout": "^0.6.1",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "sigma": "4.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "graphology-types": "^0.24.8",
+    "typescript": "^7.0.2"
+  },
+  "license": "MIT",
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.28.2": true
+  }
+}
