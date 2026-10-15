@@ -23,6 +23,7 @@ interface ExportedGraph {
   nodes: ExportedNode[];
   edges: { from: string; to: string; type: string; note?: string | null }[];
   pinned?: string[];
+  version?: string; // the database version, from the live server
 }
 type Mode = 'lists' | 'network';
 type Point = { x: number; y: number };
@@ -64,6 +65,16 @@ async function fetchGraph(): Promise<ExportedGraph> {
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
 }
 const live = () => dataUrl === 'api/graph';
+// The database version of the data on screen. It only moves once a load succeeds,
+// so a refresh that fails is retried on the next poll.
+let loadedVersion = '';
+async function pollVersion() {
+  if (document.hidden || refreshing) return;
+  const version = await fetch('api/version', { cache: 'no-store' })
+    .then((r) => r.text())
+    .catch(() => loadedVersion);
+  if (version !== loadedVersion) await refreshData().catch((err) => console.warn('Refresh failed, retrying', err));
+}
 
 const typeColor = new Map<string, string>();
 const colorFor = (type: string) => {
@@ -347,11 +358,12 @@ function weight(n: NodeSingular) {
   weights.set(n.id(), w);
   return w;
 }
-// Circle sizes, and whether each label fits inside its circle.
+// Circle sizes, and whether each label fits inside its circle. The top level is sized by how much
+// sits under it; everything else by its number of links, which is cheap on big graphs.
 function sizeCircles() {
   weights.clear();
   items().forEach((n) => {
-    const d = 14 + Math.sqrt(weight(n)) * 8;
+    const d = isTopLevel(n) || pinned.has(n.id()) ? 14 + Math.sqrt(weight(n)) * 8 : 14 + Math.sqrt(n.degree(false)) * 4;
     n.data('d', d);
     n.toggleClass('inside', (n.data('label') as string).length * 6.2 + 8 <= d);
   });
@@ -744,11 +756,14 @@ function runSearch(showList = true) {
   const matches = items()
     .filter((n) => `${n.data('title')} ${n.id()} ${n.data('raw')?.summary ?? ''}`.toLowerCase().includes(q))
     .map((n) => n.id());
+  // Searching replaces the selection: its tree and panel close first.
   restoreGroups();
+  if (selected !== null) renderPanel(null);
   selected = null;
   focus = new Set(matches);
   applyFilters();
   updateStats();
+  updateGrab();
   matches.slice(0, 20).forEach((id) => {
     const a = nodeLink(id);
     a.addEventListener('click', () => results.replaceChildren());
@@ -873,13 +888,15 @@ addEventListener('pagehide', saveState);
 // ---------- Startup ----------
 
 const saved = loadState();
-const firstAdded = applyData(await fetchGraph());
+const firstData = await fetchGraph();
+loadedVersion = firstData.version ?? '';
+const firstAdded = applyData(firstData);
 if (firstAdded.some((id) => !saved?.positions[id])) {
   await runForceLayout();
   tidyLayout();
   // Keep whatever positions were saved, so a few new nodes don't reshuffle everything.
   for (const [id, [x, y]] of Object.entries(saved?.positions ?? {})) if (netPos.has(id)) netPos.set(id, { x, y });
-} else placeNewNodes(firstAdded, saved!.positions);
+} else placeNewNodes(firstAdded, saved?.positions ?? {});
 listLayout();
 items().forEach((n) => {
   n.position(netPos.get(n.id())!);
@@ -963,8 +980,8 @@ async function refreshData() {
     renderLegend();
     updateStats();
     if (keepSelected && node(keepSelected).nonempty()) select(keepSelected, { keepCamera: true });
-    else select(null);
-    if (searchInput.value.trim()) searchInput.dispatchEvent(new Event('input'));
+    else select(null); // reruns the search, if any
+    loadedVersion = data.version ?? loadedVersion;
     cy.viewport(viewport);
   } finally {
     refreshing = false;
@@ -974,19 +991,7 @@ $<HTMLButtonElement>('refresh').onclick = () => refreshData();
 // Live data reloads itself when the graph changes, so the button is only for snapshots.
 if (live()) $('refresh').style.display = 'none';
 
-if (live()) {
-  let lastVersion = await fetch('api/version').then((r) => r.text());
-  setInterval(async () => {
-    if (document.hidden || refreshing) return;
-    const version = await fetch('api/version', { cache: 'no-store' })
-      .then((r) => r.text())
-      .catch(() => lastVersion);
-    if (version !== lastVersion) {
-      lastVersion = version;
-      await refreshData();
-    }
-  }, 3000);
-}
+if (live()) setInterval(pollVersion, 3000);
 
 Object.assign(window, { cy, select, refreshData, saveState });
 

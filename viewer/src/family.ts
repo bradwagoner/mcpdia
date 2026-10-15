@@ -81,6 +81,7 @@ export function family(node: string, g: FamilyGraph, sizes: Partial<Sizes> = {})
           .filter((n) => !seen.has(n) && g.visible(n))
           .sort(byTitle)) {
           if (count >= limit) break;
+          if (seen.has(n)) continue; // two hierarchy edges between the same pair list it twice
           seen.add(n);
           next.push(n);
           count++;

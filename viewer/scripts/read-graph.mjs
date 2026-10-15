@@ -35,10 +35,18 @@ export function readGraph(db) {
 
   // Pinned "start here" nodes (the orient tool's list), from every scope's `pinned` setting.
   const pinned = new Set();
-  for (const { value } of db.prepare(`SELECT value FROM settings WHERE key = 'pinned'`).all()) {
-    for (const key of JSON.parse(value)) pinned.add(key.includes(':') ? key : `default:${key}`);
+  for (const { namespace, value } of db.prepare(`SELECT namespace, value FROM settings WHERE key = 'pinned'`).all()) {
+    for (const ref of JSON.parse(value)) pinned.add(qualify(ref, namespace));
   }
   return { typeDefs, nodes, edges, pinned: [...pinned] };
+}
+
+// A pinned ref as `namespace:key`. A bare key belongs to the setting's own namespace.
+// Like parseRef in src/core/keys.ts, the namespace ends at the last colon before the first slash.
+function qualify(ref, namespace) {
+  const slash = ref.indexOf('/');
+  const colon = (slash === -1 ? ref : ref.slice(0, slash)).lastIndexOf(':');
+  return colon > 0 ? ref : `${namespace}:${ref}`;
 }
 
 // Changes whenever another connection (the MCP server) commits to the database.

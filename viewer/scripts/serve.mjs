@@ -1,7 +1,7 @@
 // Serves the viewer and reads the graph live, so the page can follow changes the MCP server makes.
 // Usage (from viewer/): npm start  [-- path/to/mcpedia.db]
 //                        npm run dev [-- path/to/mcpedia.db]   also rebuilds on save and reloads the page
-// Listens on 127.0.0.1 only and opens the database read-only.
+// Listens on 127.0.0.1 only, answers only to local host names, and opens the database read-only.
 import { createServer } from 'node:http';
 import { watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -23,7 +23,13 @@ const types = {
 
 const db = openGraph(dbPath);
 
+// Only local names. A web page on another site can point its own host name at 127.0.0.1
+// (DNS rebinding) and read the graph as if it were same-origin; checking Host stops that.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const isLocalHost = (host = '') => LOCAL_HOSTS.has(host.replace(/:\d+$/, '').toLowerCase());
+
 const server = createServer(async (req, res) => {
+  if (!isLocalHost(req.headers.host)) return send(res, 403, 'text/plain', 'Forbidden: open the viewer at localhost');
   const path = new URL(req.url ?? '/', 'http://localhost').pathname;
   try {
     if (path === '/api/reload') return listenForReload(res);

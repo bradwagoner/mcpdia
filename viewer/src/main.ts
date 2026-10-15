@@ -34,6 +34,7 @@ interface ExportedGraph {
   nodes: ExportedNode[];
   edges: ExportedEdge[];
   pinned?: string[];
+  version?: string; // the database version, from the live server
 }
 
 const GHOST_TYPE = '(ghost)';
@@ -68,6 +69,16 @@ async function fetchGraph(): Promise<ExportedGraph> {
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
 }
 const live = () => dataUrl === 'api/graph';
+// The database version of the data on screen. It only moves once a load succeeds,
+// so a refresh that fails is retried on the next poll.
+let loadedVersion = '';
+async function pollVersion() {
+  if (document.hidden || refreshing) return;
+  const version = await fetch('api/version', { cache: 'no-store' })
+    .then((r) => r.text())
+    .catch(() => loadedVersion);
+  if (version !== loadedVersion) await refreshData().catch((err) => console.warn('Refresh failed, retrying', err));
+}
 
 const graph = new MultiDirectedGraph();
 const typeColor = new Map<string, string>();
@@ -204,17 +215,24 @@ function placeNewNodes(added: string[], saved: Record<string, [number, number]>)
 }
 
 const saved = loadState();
-const firstAdded = applyData(await fetchGraph());
+const firstData = await fetchGraph();
+loadedVersion = firstData.version ?? '';
+const firstAdded = applyData(firstData);
 // Without a saved layout, start on a circle and let the force layout spread things out.
 // Small graphs are laid out right away; big ones settle in a background worker.
 const needsLayout = firstAdded.some((id) => !saved?.positions[id]);
 const layoutNow = needsLayout && graph.order <= 3000;
+// Positions the user had, put back over a fresh layout so a few new nodes don't reshuffle everything.
+const restoreSaved = () => {
+  for (const [id, [x, y]] of Object.entries(saved?.positions ?? {}))
+    if (graph.hasNode(id)) graph.mergeNodeAttributes(id, { netX: x, netY: y });
+};
 if (needsLayout) {
   circular.assign(graph);
   if (layoutNow) forceAtlas2.assign(graph, { iterations: 500, settings: forceAtlas2.inferSettings(graph) });
   graph.forEachNode((id, a) => graph.mergeNodeAttributes(id, { netX: a.x, netY: a.y }));
-}
-placeNewNodes(firstAdded, saved?.positions ?? {});
+  restoreSaved();
+} else placeNewNodes(firstAdded, saved?.positions ?? {});
 graph.forEachNode((id, a) => graph.mergeNodeAttributes(id, { x: a.netX, y: a.netY }));
 listLayout();
 const layout = new FA2Layout(graph, {
@@ -418,6 +436,7 @@ const radiusPx = (size: number) => (renderer ? renderer.scaleSize(size) : size);
 const labelFits = (label: string, size: number) => 2 * radiusPx(size) >= labelWidth(label) + 10;
 if (layoutNow) {
   tidyLayout();
+  restoreSaved();
   graph.forEachNode((id, a) => graph.mergeNodeAttributes(id, { x: a.netX, y: a.netY }));
 }
 setMode('network');
@@ -922,6 +941,11 @@ function runSearch(showList = true) {
     return;
   }
   const matches = searchable.filter((n) => n.text.includes(q)).map((n) => n.id);
+  // Searching replaces the selection: its tree and panel close first.
+  if (selected !== null) {
+    restoreGroups(true);
+    renderPanel(null);
+  }
   // Brighten every match on the graph; list the first 20.
   selected = null;
   focus = new Set(matches);
@@ -1042,7 +1066,9 @@ async function refreshData() {
     renderer!.getCamera().setState(camera);
     if (keepSelected && graph.hasNode(keepSelected)) select(keepSelected, { keepCamera: true });
     else if (keepSelected) select(null);
-    if (searchInput.value.trim()) searchInput.dispatchEvent(new Event('input'));
+    // A search picked from the results keeps its text; rerun it only when nothing is selected.
+    if (!selected && searchInput.value.trim()) runSearch(false);
+    loadedVersion = data.version ?? loadedVersion;
     renderer!.refresh();
   } finally {
     refreshing = false;
@@ -1051,22 +1077,9 @@ async function refreshData() {
 $<HTMLButtonElement>('refresh').onclick = () => refreshData();
 
 // Live mode: ask the server every few seconds whether the database changed.
-let lastVersion = '';
 // Live data reloads itself when the graph changes, so the button is only for snapshots.
 if (live()) $('refresh').style.display = 'none';
-if (live()) {
-  lastVersion = await fetch('api/version').then((r) => r.text());
-  setInterval(async () => {
-    if (document.hidden || refreshing) return;
-    const version = await fetch('api/version', { cache: 'no-store' })
-      .then((r) => r.text())
-      .catch(() => lastVersion);
-    if (version !== lastVersion) {
-      lastVersion = version;
-      await refreshData();
-    }
-  }, 3000);
-}
+if (live()) setInterval(pollVersion, 3000);
 
 // ---------- Remembering the view across reloads ----------
 // Layout and view state live in this browser's localStorage, per data source.
