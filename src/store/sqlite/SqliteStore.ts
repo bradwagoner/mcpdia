@@ -327,10 +327,12 @@ export class SqliteStore implements GraphStore {
 
   // hydrate() binds one parameter per id, so this reads up to SQLite's
   // variable limit (32,766 nodes) in one call. Page it if graphs grow past that.
+  // Rows made in the same millisecond tie on created_at, and ULIDs are random within a
+  // millisecond, so rowid (insertion order) breaks the tie.
   async listNodes(namespaces: string[]): Promise<NodeRecord[]> {
     if (namespaces.length === 0) return [];
     const rows = this.db
-      .prepare(`SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, id`)
+      .prepare(`SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, rowid`)
       .all(...namespaces) as NodeRow[];
     return this.hydrate(rows);
   }
@@ -340,7 +342,7 @@ export class SqliteStore implements GraphStore {
     const rows = this.db
       .prepare(
         `SELECT * FROM edges WHERE status = 'active' AND from_namespace IN (${marks(namespaces)})
-         ORDER BY created_at, id`,
+         ORDER BY created_at, rowid`,
       )
       .all(...namespaces) as EdgeRow[];
     return rows.map(toEdge);
