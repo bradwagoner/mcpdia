@@ -1,9 +1,9 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { parseArgs } from 'node:util';
 import { describe, expect, it } from 'vitest';
-import { errorLine, pickCommand, writeLinesAtomically } from '../src/cli.js';
+import { assertNotDatabase, errorLine, pickCommand, writeLinesAtomically } from '../src/cli.js';
 import { UserError } from '../src/core/errors.js';
 
 describe('pickCommand', () => {
@@ -50,11 +50,46 @@ describe('writeLinesAtomically', () => {
   });
 
   it('creates no file when the export fails before writing', async () => {
-    const path = join(mkdtempSync(join(tmpdir(), 'mcpedia-cli-')), 'out.jsonl');
+    const dir = mkdtempSync(join(tmpdir(), 'mcpedia-cli-'));
+    const path = join(dir, 'out.jsonl');
     await expect(
       writeLinesAtomically(path, async () => Promise.reject(new UserError('Unknown namespace: x.'))),
     ).rejects.toThrow(UserError);
     expect(existsSync(path)).toBe(false);
+    expect(readdirSync(dir)).toEqual([]);
+  });
+});
+
+describe('assertNotDatabase', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mcpedia-db-'));
+  const db = join(dir, 'graph.db');
+  writeFileSync(db, '');
+
+  it('refuses the database and its side files, however the path is written', () => {
+    for (const out of [
+      db,
+      `${db}-wal`,
+      `${db}-shm`,
+      `${db}-journal`,
+      relative(process.cwd(), db),
+      join(dir, '.', 'graph.db'),
+    ]) {
+      expect(() => assertNotDatabase(out, db), out).toThrow(UserError);
+    }
+  });
+
+  it('refuses the database through a symlinked folder', () => {
+    if (process.platform === 'win32') return; // Symlinks need extra rights on Windows.
+    const link = join(mkdtempSync(join(tmpdir(), 'mcpedia-link-')), 'here');
+    symlinkSync(dir, link);
+    expect(() => assertNotDatabase(join(link, 'graph.db'), db)).toThrow(UserError);
+  });
+
+  it('allows any other file', () => {
+    mkdirSync(join(dir, 'sub'), { recursive: true });
+    expect(() => assertNotDatabase(join(dir, 'graph.jsonl'), db)).not.toThrow();
+    expect(() => assertNotDatabase(join(dir, 'sub', 'graph.db'), db)).not.toThrow();
+    expect(() => assertNotDatabase(join(dir, 'missing', 'graph.db'), db)).not.toThrow();
   });
 });
 

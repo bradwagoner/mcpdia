@@ -1,4 +1,5 @@
-import { createWriteStream, renameSync, rmSync } from 'node:fs';
+import { createWriteStream, realpathSync, renameSync, rmSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { UserError } from './core/errors.js';
 
 /** Command-line helpers for src/index.ts, kept apart so they can be tested without starting anything. */
@@ -27,6 +28,7 @@ export async function writeLinesAtomically<T>(
 ): Promise<T> {
   const tmp = `${path}.${process.pid}.tmp`;
   const out = createWriteStream(tmp);
+  const closed = new Promise<void>((done) => out.once('close', () => done()));
   const failed = new Promise<never>((_, reject) => out.once('error', reject));
   failed.catch(() => {}); // Raced below; this only stops an unhandled rejection warning.
   const write = async (line: string) => {
@@ -38,9 +40,38 @@ export async function writeLinesAtomically<T>(
     renameSync(tmp, path);
     return result;
   } catch (err) {
+    // The file may still be opening; remove it only once the stream has let go of it.
     out.destroy();
+    await closed;
     rmSync(tmp, { force: true });
     throw err;
+  }
+}
+
+/**
+ * Refuses an export path that is the database itself or one of its side files
+ * (-wal, -shm, -journal): writing there would replace the graph.
+ * Paths are compared after resolving symlinks, and case-insensitively on Windows and macOS.
+ */
+export function assertNotDatabase(out: string, dbPath: string): void {
+  // The output usually doesn't exist yet, so resolve its folder instead.
+  const real = (path: string) => {
+    try {
+      return realpathSync(path);
+    } catch {
+      try {
+        return join(realpathSync(dirname(resolve(path))), basename(path));
+      } catch {
+        return resolve(path);
+      }
+    }
+  };
+  const fold = (path: string) =>
+    process.platform === 'win32' || process.platform === 'darwin' ? path.toLowerCase() : path;
+  const db = real(dbPath);
+  const target = fold(real(out));
+  if (['', '-wal', '-shm', '-journal'].some((suffix) => fold(db + suffix) === target)) {
+    throw new UserError(`--out ${out} is the database being exported.`, 'Pick another file name.');
   }
 }
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+import { once } from 'node:events';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { errorLine, pickCommand, writeLinesAtomically } from './cli.js';
+import { assertNotDatabase, errorLine, pickCommand, writeLinesAtomically } from './cli.js';
 import { soloContext } from './context.js';
 import { exportJsonl, type ExportInput } from './core/export.js';
 import { createServer } from './server.js';
@@ -38,14 +39,16 @@ async function runExport(args: string[]): Promise<void> {
     throw err;
   });
 
+  if (values.out) assertNotDatabase(values.out, dbPath);
   const store = new SqliteStore(dbPath);
   const input: ExportInput = { namespaces: values.namespace, allStatus: values['all-status'] };
   const run = (write: (line: string) => void | Promise<void>) => exportJsonl(soloContext(), store, input, write);
   try {
     const header = values.out
       ? await writeLinesAtomically(values.out, run)
-      : await run((line) => {
-          process.stdout.write(line + '\n');
+      : await run(async (line) => {
+          // Wait when the reader is slower than the export, so lines don't pile up in memory.
+          if (!process.stdout.write(line + '\n')) await once(process.stdout, 'drain');
         });
     console.error(`exported ${header.nodes} nodes, ${header.edges} edges from ${dbPath}`);
   } finally {
