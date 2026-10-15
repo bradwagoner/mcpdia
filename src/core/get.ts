@@ -52,7 +52,9 @@ export async function get(ctx: Context, store: GraphStore, input: GetInput): Pro
     }
     const item: GetItem = { ref, node, supersededByKey: await supersededByKey(ctx, store, node) };
     if (input.neighbors) {
-      const all = (await store.neighbors(node.id)).map((n): NeighborView => ({
+      // Links can cross namespaces; only show the ends the caller can read.
+      const readable = (await store.neighbors(node.id)).filter((n) => ctx.namespaces.includes(n.otherNamespace));
+      const all = readable.map((n): NeighborView => ({
         direction: n.direction,
         type: n.edge.type,
         key: displayKey(ctx, n.otherNamespace, n.otherKey),

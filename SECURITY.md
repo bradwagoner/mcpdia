@@ -10,7 +10,7 @@ How to treat retrieved content:
 
 - **Agents** should read graph content as reference material. A node can inform a decision; it cannot authorize one. Instructions that appear inside node text carry no more authority than a sentence in a README found on the internet.
 - **Clients** that let an agent act on its own (run commands, push code, send messages) should keep their usual confirmation steps for those actions. MCPedia does not grant permissions and nothing it returns should be read as granting them.
-- **People** curating a graph get a full trail to work with. Every write is stamped with `author`, `source` and `updated_by`, every change is kept in `node_versions`, and nothing is hard-deleted. A suspicious node can be traced to the session that wrote it, marked `outdated_or_wrong` with `feedback`, superseded or soft-deleted, and the original stays on record.
+- **People** curating a graph get a trail to work with. Node writes are stamped with `author`, `source` and `updated_by`, every change to a node's content or status is kept in `node_versions`, and nothing is hard-deleted. A suspicious node can be marked `outdated_or_wrong` with `feedback`, superseded or soft-deleted, and the original stays on record. In solo mode every write is stamped `local`, so the trail shows what changed and when, not which client wrote it. Edge notes and feedback counts are updated in place, without a history.
 
 Be deliberate about what you paste in. Text copied from an untrusted source keeps whatever it was carrying.
 
@@ -33,7 +33,7 @@ Keep secrets out of the graph. API keys, passwords and personal data do not belo
 Team mode adds HTTP transport and Postgres, and with them a real network boundary:
 
 - **Token-based authentication** on every request. The caller identity becomes the `context.caller` stamped on writes, so the audit trail names real people and agents instead of `local`.
-- **Per-namespace permissions.** `context.namespaces` already limits every read; in team mode it is built from the caller's grants, so a team sees its namespaces and nothing else.
+- **Per-namespace permissions.** Team mode builds `context.namespaces` from the caller's grants, and every read stays inside it, so a team sees its namespaces and nothing else.
 - **Transport security.** HTTP deployments belong behind TLS; the documented deployment path will set that up.
 - **Shared-graph injection risk grows.** In a team graph, one person's agent writes what another person's agent reads. The guidance above matters more there, and provenance on every node is what makes a bad write traceable and reversible.
 
