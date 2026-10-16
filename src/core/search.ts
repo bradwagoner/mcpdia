@@ -1,8 +1,9 @@
 import type { Context } from '../context.js';
-import type { GraphStore, NodeRecord } from '../store/GraphStore.js';
+import { NODE_STATUSES, type GraphStore, type NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import type { RenderLevel } from './render.js';
-import { normalizeNodeType, normalizeTag, suggestType } from './vocabulary.js';
+import { supersededByKey } from './nodes.js';
+import { normalizeNodeType, normalizeTag } from './vocabulary.js';
 
 export interface SearchInput {
   query: string;
@@ -10,6 +11,8 @@ export interface SearchInput {
   tag?: string;
   level: RenderLevel;
   limit: number;
+  /** Include superseded and deleted nodes. */
+  allStatus?: boolean;
 }
 
 export interface SearchHit {
@@ -17,6 +20,8 @@ export interface SearchHit {
   edgeCount?: number;
   /** For partial matches: which query words this hit matched. */
   matched?: string[];
+  /** Display key of the replacing node, for superseded hits. */
+  supersededByKey?: string;
 }
 
 export interface SearchOutput {
@@ -25,8 +30,8 @@ export interface SearchOutput {
   total: number;
   /** No node matched every word, so these hits match only some of them. */
   partial: boolean;
-  /** The type filter names a type no node has; holds the closest one in use, if any. */
-  unknownType?: { type: string; suggestion: string | null };
+  /** The type filter names a type no node has. */
+  unknownType?: string;
 }
 
 /**
@@ -60,6 +65,7 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
     terms,
     type: input.type ? normalizeNodeType(input.type) : undefined,
     tag: input.tag ? normalizeTag(input.tag) : undefined,
+    statuses: input.allStatus ? NODE_STATUSES : undefined,
     limit: input.limit,
   };
   let result = await store.search({ ...base, match: 'all' });
@@ -73,7 +79,7 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   let unknownType: SearchOutput['unknownType'];
   if (result.total === 0 && base.type) {
     const used = (await store.stats(ctx.namespaces)).nodeTypes.map((t) => t.name);
-    if (!used.includes(base.type)) unknownType = { type: base.type, suggestion: suggestType(base.type, used) };
+    if (!used.includes(base.type)) unknownType = base.type;
   }
 
   // Which words each partial hit matched, one search per word, so the caller can judge relevance.
@@ -90,11 +96,14 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   const counts = wantsCounts ? await store.edgeCounts(result.nodes.map((n) => n.id)) : undefined;
   return {
     query: input.query,
-    hits: result.nodes.map((node) => ({
-      node,
-      edgeCount: counts?.get(node.id) ?? (wantsCounts ? 0 : undefined),
-      matched: partial ? (matched.get(node.id) ?? []) : undefined,
-    })),
+    hits: await Promise.all(
+      result.nodes.map(async (node) => ({
+        node,
+        edgeCount: counts?.get(node.id) ?? (wantsCounts ? 0 : undefined),
+        matched: partial ? (matched.get(node.id) ?? []) : undefined,
+        supersededByKey: await supersededByKey(ctx, store, node),
+      })),
+    ),
     total: result.total,
     partial,
     unknownType,

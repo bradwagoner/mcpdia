@@ -58,11 +58,11 @@ describe('upsert', () => {
     );
   });
 
-  it('hints at a near-duplicate type but still writes', async () => {
+  it('points out a new type but still writes', async () => {
     await upsert(ctx, store, { type: 'ticket', title: 'One' });
     const out = await upsert(ctx, store, { type: 'Tickets', title: 'Two' });
     expect(out.created).toBe(true);
-    expect(out.typeHint).toBe('Type "tickets" is new here. Did you mean "ticket"?');
+    expect(out.typeHint).toBe('Type "tickets" is new here. list_types shows the types in use.');
     expect((await upsert(ctx, store, { type: 'ticket', title: 'Three' })).typeHint).toBeUndefined();
   });
 
@@ -211,14 +211,13 @@ describe('link and get', () => {
     );
   });
 
-  it('fetches several keys and suggests a fix for a typo', async () => {
+  it('fetches several keys and reports a missing one', async () => {
     const items = await get(ctx, store, { keys: ['concept/roles', 'concept/permision'], neighbors: false });
     expect(items[0]?.node?.title).toBe('Roles');
     expect(items[1]).toEqual({
       ref: 'concept/permision',
       node: null,
       deleted: false,
-      suggestion: 'concept/permissions',
     });
   });
 

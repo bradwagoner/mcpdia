@@ -1,6 +1,6 @@
 # 0002: Free-form types with soft guardrails
 
-- Status: Accepted
+- Status: Accepted; the "did you mean" hint is replaced by ADR 0018
 - Date: 2026-10-06
 
 ## Context

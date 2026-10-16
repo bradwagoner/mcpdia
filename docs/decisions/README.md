@@ -5,7 +5,7 @@ Short records of the significant design decisions in this project: what we chose
 | #    | Decision                                              | Status   |
 |------|-------------------------------------------------------|----------|
 | 0001 | TypeScript and a three-layer architecture             | Accepted |
-| 0002 | Free-form types with soft guardrails                  | Accepted |
+| 0002 | Free-form types with soft guardrails                  | Accepted, amended by 0018 |
 | 0003 | Stable keys, namespaces, and portable packs           | Accepted |
 | 0004 | Render levels and a lean, configurable `orient`       | Accepted |
 | 0005 | Usefulness feedback as a separate tool                | Accepted |
@@ -20,6 +20,8 @@ Short records of the significant design decisions in this project: what we chose
 | 0014 | Graph viewer library: Sigma.js or Cytoscape.js | Accepted |
 | 0015 | Links on create, and a hint for nodes with no parent | Accepted |
 | 0016 | Tools say what happened                               | Accepted |
+| 0017 | Read and restore deleted nodes                        | Accepted |
+| 0018 | State facts, don't guess                              | Accepted |
 
 ## Template
 

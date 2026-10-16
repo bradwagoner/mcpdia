@@ -5,7 +5,8 @@
  * Inputs reaching the store are already normalized and validated by the core.
  */
 
-export type NodeStatus = 'active' | 'superseded' | 'deleted';
+export const NODE_STATUSES = ['active', 'superseded', 'deleted'] as const;
+export type NodeStatus = (typeof NODE_STATUSES)[number];
 
 export interface NodeRecord {
   id: string;
@@ -99,10 +100,12 @@ export interface SearchQuery {
   terms: string[];
   /** 'all' requires every term; 'any' ranks partial matches too. */
   match: 'all' | 'any';
-  /** Treat each term as a word prefix (used for "did you mean"). */
+  /** Treat each term as a word prefix. */
   prefix?: boolean;
   type?: string;
   tag?: string;
+  /** Statuses to include; active only when omitted. */
+  statuses?: readonly NodeStatus[];
   /** Only these node ids, e.g. to check which words each hit matched. */
   ids?: string[];
   limit: number;

@@ -56,13 +56,48 @@ describe('tool messages', () => {
 
   it('says a node was deleted instead of not found', async () => {
     await call('delete', { keys: ['concept/roles'] });
-    expect(await call('get', { keys: ['concept/roles'] })).toMatch(/^concept\/roles was deleted\./);
+    expect(await call('get', { keys: ['concept/roles'] })).toMatch(
+      /^concept\/roles was deleted; all_status: true shows it\./,
+    );
     expect(await call('verify', { keys: ['concept/roles', 'concept/nope'] })).toBe(
       'Not found: concept/nope.\nAlready deleted: concept/roles.',
     );
     expect(await call('annotate', { on: 'concept/roles', text: 'Hi' })).toBe(
-      'concept/roles was deleted. search for a current node.',
+      'concept/roles was deleted. Upsert its key to restore it, or search for a current node.',
     );
+  });
+
+  it('reads deleted and superseded nodes on request', async () => {
+    await call('upsert', { key: 'concept/old', type: 'concept', title: 'Old roles', summary: 'x' });
+    await call('supersede', { old: 'concept/old', new: 'concept/permissions' });
+    await call('delete', { keys: ['concept/roles'] });
+    expect(await call('search', { query: 'roles', level: 'title' })).toBe(
+      '1 result for "roles":\n- concept/permissions [concept] Permission system',
+    );
+    const all = await call('search', { query: 'roles', level: 'title', all_status: true });
+    expect(all).toContain('concept/roles [concept] Roles (deleted)');
+    expect(all).toContain('concept/old [concept] Old roles (superseded by concept/permissions)');
+    expect(await call('get', { keys: ['concept/roles'], all_status: true })).toMatch(
+      /\nDeleted on \d{4}-\d{2}-\d{2}\. Upsert this key to restore it\./,
+    );
+  });
+
+  it('restores a deleted node when its key is written again', async () => {
+    await call('upsert', { key: 'concept/permissions', type: 'task', title: 'Permission system' });
+    await call('upsert', { key: 'concept/roles', type: 'test', title: 'Roles', body: 'Old body.' });
+    await call('delete', { keys: ['concept/roles'] });
+    expect(await call('upsert', { key: 'concept/roles', type: 'test', title: 'Roles', version: 1 })).toBe(
+      'concept/roles changed: it is at v3, not v1. get it again and re-apply your change.',
+    );
+    expect(await call('get', { keys: ['concept/roles'] })).toMatch(/^concept\/roles was deleted/);
+    // No "did you mean task": the node already had type test.
+    expect(await call('upsert', { key: 'concept/roles', type: 'test', title: 'Roles again' })).toBe(
+      'Restored concept/roles (v5).\nIt was deleted; fields you did not pass kept their old values.',
+    );
+    const back = await call('get', { keys: ['concept/roles'] });
+    expect(back).toContain('Roles again');
+    expect(back).toContain('Old body.');
+    expect(back).not.toContain('Deleted on');
   });
 
   it('lists what still links to a deleted node, leaving notes out', async () => {
@@ -77,7 +112,7 @@ describe('tool messages', () => {
 
   it('names an unknown type filter and echoes filters on a miss', async () => {
     expect(await call('search', { query: 'roles', type: 'conept' })).toBe(
-      'No nodes have type "conept". Did you mean "concept"?',
+      'No nodes have type "conept". list_types shows the types in use.',
     );
     expect(await call('search', { query: 'roles', type: 'concept', tag: 'auth' })).toBe(
       'No results for "roles" with type concept and tag auth. Try without the filter, or other words.',

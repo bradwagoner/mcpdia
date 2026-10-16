@@ -160,6 +160,14 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         expect(await wrongAt()).toBeNull();
       });
 
+      it('searches other statuses only when asked', async () => {
+        const n = await store.createNode(node({ key: 'note/gone', title: 'Vanished widget', aliases: [], tags: [] }));
+        await store.setStatus(n.id, 'deleted', 'test');
+        expect((await store.search({ ...q, terms: ['vanished'] })).total).toBe(0);
+        const all = await store.search({ ...q, terms: ['vanished'], statuses: ['active', 'deleted'] });
+        expect(all.nodes.map((x) => x.status)).toEqual(['deleted']);
+      });
+
       it('limits a search to given ids', async () => {
         const all = await store.search({ ...q, terms: ['permission'] });
         const first = all.nodes[0]!.id;

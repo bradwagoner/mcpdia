@@ -14,7 +14,7 @@ Keeping LLM memory in markdown files costs tokens: the model has to read a big f
 
 ## Features
 
-- Free-form node and edge types, with soft "did you mean?" guardrails (cleanup tooling is planned for v0.2)
+- Free-form node and edge types: a new type is pointed out, never blocked (cleanup tooling is planned for v0.2)
 - Render levels (`title`, `summary`, `snippet`, `full`) on every read
 - A tiny, configurable `orient` tool as the welcome mat for connecting LLMs
 - Notes as linked nodes, usefulness feedback, and versioned, reversible edits

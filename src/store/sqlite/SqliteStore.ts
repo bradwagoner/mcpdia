@@ -219,8 +219,9 @@ export class SqliteStore implements GraphStore {
     const match = q.terms
       .map((t) => `"${t.replaceAll('"', '""')}"${q.prefix ? '*' : ''}`)
       .join(q.match === 'all' ? ' AND ' : ' OR ');
-    const where = [`nodes_fts MATCH ?`, `n.status = 'active'`, `n.namespace IN (${marks(q.namespaces)})`];
-    const params: unknown[] = [match, ...q.namespaces];
+    const statuses = q.statuses ?? ['active'];
+    const where = [`nodes_fts MATCH ?`, `n.status IN (${marks(statuses)})`, `n.namespace IN (${marks(q.namespaces)})`];
+    const params: unknown[] = [match, ...statuses, ...q.namespaces];
     if (q.type) {
       where.push('n.type = ?');
       params.push(q.type);
@@ -531,7 +532,7 @@ function toEdge(r: EdgeRow): EdgeRecord {
 // Ids per lookup in hydrate(), well under SQLite's 32,766 variable limit.
 const HYDRATE_BATCH = 10_000;
 
-function marks(values: unknown[]): string {
+function marks(values: readonly unknown[]): string {
   return values.map(() => '?').join(', ');
 }
 
