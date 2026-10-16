@@ -119,6 +119,13 @@ describe('tool messages', () => {
     );
   });
 
+  it('does not call a type unknown when all_status searches the nodes that have it', async () => {
+    await call('upsert', { key: 'task/old', type: 'task', title: 'Old task' });
+    await call('delete', { keys: ['task/old'] });
+    expect(await call('search', { query: 'zebra', type: 'task', all_status: true })).not.toMatch(/^No nodes have type/);
+    expect(await call('search', { query: 'zebra', type: 'nope', all_status: true })).not.toMatch(/^No nodes have type/);
+  });
+
   it('shows which words each partial match matched', async () => {
     expect(await call('search', { query: 'permission roles billing', level: 'title' })).toBe(
       'No node matched all words of "permission roles billing". 2 partial matches; check them before relying on them:\n' +

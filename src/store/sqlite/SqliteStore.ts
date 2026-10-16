@@ -78,12 +78,7 @@ export class SqliteStore implements GraphStore {
       this.writeAliasesAndTags(id, node.aliases, node.tags);
       this.recordVersion(id, 'create', node.author, now);
       // Late-bound edges (ADR 0007): anything already pointing at this key now resolves.
-      this.db
-        .prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL')
-        .run(id, node.namespace, node.key);
-      this.db
-        .prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL')
-        .run(id, node.namespace, node.key);
+      this.resolveWaitingEdges(id, node.namespace, node.key);
     })();
     return (await this.getNodeById(id))!;
   }
@@ -132,6 +127,12 @@ export class SqliteStore implements GraphStore {
         )
         .run(status, status === 'superseded' ? (supersededBy ?? null) : null, changedBy, now, id);
       this.recordVersion(id, changeType, changedBy, now);
+      if (status === 'active') {
+        // Links made while it was deleted were stored unresolved (resolveId skips deleted nodes).
+        const row = this.db.prepare('SELECT namespace, key FROM nodes WHERE id = ?').get(id) as
+          { namespace: string; key: string } | undefined;
+        if (row) this.resolveWaitingEdges(id, row.namespace, row.key);
+      }
     })();
     return (await this.getNodeById(id))!;
   }
@@ -412,6 +413,15 @@ export class SqliteStore implements GraphStore {
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(id, node.version, JSON.stringify(node), node.body?.length ?? 0, changeType, changedBy, at);
+  }
+
+  private resolveWaitingEdges(id: string, namespace: string, key: string): void {
+    this.db
+      .prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL')
+      .run(id, namespace, key);
+    this.db
+      .prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL')
+      .run(id, namespace, key);
   }
 
   private resolveId(namespace: string, key: string): string | null {

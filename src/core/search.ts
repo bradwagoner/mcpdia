@@ -77,7 +77,8 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   }
 
   let unknownType: SearchOutput['unknownType'];
-  if (result.total === 0 && base.type) {
+  // stats() counts active nodes only, so it can't call a type unknown when deleted/superseded ones are searched too.
+  if (result.total === 0 && base.type && !input.allStatus) {
     const used = (await store.stats(ctx.namespaces)).nodeTypes.map((t) => t.name);
     if (!used.includes(base.type)) unknownType = base.type;
   }
