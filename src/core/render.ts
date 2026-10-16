@@ -29,7 +29,8 @@ export function titleLine(ctx: Context, node: NodeRecord): string {
  */
 export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, extras: RenderExtras = {}): string {
   if (level === 'full') return renderFull(ctx, node, extras);
-  const lines = [titleLine(ctx, node)];
+  const marker = extras.supersededByKey ? ` (superseded by ${extras.supersededByKey})` : '';
+  const lines = [titleLine(ctx, node) + marker];
   if (level === 'summary' || level === 'snippet') lines.push(`  ${summaryLine(node, extras)}`);
   if (level === 'snippet' && node.body) lines.push(`  ${snippet(node.body)}`);
   return lines.join('\n');

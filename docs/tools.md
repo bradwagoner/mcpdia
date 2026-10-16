@@ -9,7 +9,7 @@ What each MCP tool takes and returns. Responses are compact text (ADR 0011); ren
 | `snippet` | + the first 300 characters of the body |
 | `full` | + whole body, tags, aliases, properties, version, updated date |
 
-Reads show active nodes. A superseded node fetched directly says `Superseded by <key>`. Deleted nodes behave as not found.
+Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes behave as not found.
 
 ## orient
 "Call first. Explains this knowledge graph, its house rules and where to start. Pass a few focus words about your task to get likely-relevant entries."
