@@ -5,12 +5,16 @@ export function text(body: string): CallToolResult {
   return { content: [{ type: 'text', text: body }] };
 }
 
-/** `Verified concept/a, concept/b.` plus a line for keys that were not found. */
-export function batchText(verb: string, out: { done: string[]; notFound: string[]; superseded?: string[] }): string {
+/** `Verified concept/a, concept/b.` plus a line each for keys not found, superseded or already deleted. */
+export function batchText(
+  verb: string,
+  out: { done: string[]; notFound: string[]; superseded?: string[]; deleted?: string[] },
+): string {
   const lines: string[] = [];
   if (out.done.length) lines.push(`${verb} ${out.done.join(', ')}.`);
   if (out.notFound.length) lines.push(`Not found: ${out.notFound.join(', ')}.`);
   if (out.superseded?.length) lines.push(`Superseded, use the replacement: ${out.superseded.join(', ')}.`);
+  if (out.deleted?.length) lines.push(`Already deleted: ${out.deleted.join(', ')}.`);
   return lines.join('\n');
 }
 

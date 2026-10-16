@@ -146,9 +146,9 @@ export class SqliteStore implements GraphStore {
     const set = {
       useful: 'useful_count = useful_count + 1, last_useful_at = ?',
       not_useful: 'not_useful_count = not_useful_count + 1',
-      outdated_or_wrong: 'wrong_count = wrong_count + 1',
+      outdated_or_wrong: 'wrong_count = wrong_count + 1, last_wrong_at = ?',
     }[verdict];
-    const params = verdict === 'useful' ? [at, ...ids] : ids;
+    const params = verdict === 'not_useful' ? ids : [at, ...ids];
     this.db.prepare(`UPDATE nodes SET ${set} WHERE id IN (${marks(ids)})`).run(...params);
   }
 
@@ -458,6 +458,7 @@ export class SqliteStore implements GraphStore {
       notUsefulCount: r.not_useful_count,
       wrongCount: r.wrong_count,
       lastUsefulAt: r.last_useful_at,
+      lastWrongAt: r.last_wrong_at,
     }));
   }
 }
@@ -484,6 +485,7 @@ interface NodeRow {
   not_useful_count: number;
   wrong_count: number;
   last_useful_at: string | null;
+  last_wrong_at: string | null;
 }
 
 interface EdgeRow {

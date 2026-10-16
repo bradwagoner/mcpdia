@@ -63,6 +63,7 @@ This file does two jobs: it states what each release will and will not include, 
 Newest first. Each entry: what shipped, what changed from the plan, what we learned.
 
 ### Unreleased
+- Tool messages (2026-10-16, #10, #11): results now say what the server knows: partial search matches with the words they matched, nodes flagged outdated or wrong, deleted and superseded keys, dangling links after a delete, parent loops, dropped properties and missing summaries (ADR 0016). Question words like "what is" are dropped from queries. Migration 002 adds `last_wrong_at`.
 - Links on create (2026-10-15, #30): `upsert` takes `links` and writes the node's edges in the same call, and its result points out a new node with no parent (ADR 0015).
 - Repo cleanup (2026-10-13): removed the planning handoff document (its decisions live in the ADRs), untracked IntelliJ project files, and relabelled the README feature list so planned work is marked as planned.
 - JSONL export (2026-10-13, KAN-6): `mcpedia export [--namespace ns]... [--all-status] [--out file]` writes a header, the active nodes (every status with `--all-status`), then the active edges. Format in `docs/schema.md`. Version history is not exported.

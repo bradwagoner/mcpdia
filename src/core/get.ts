@@ -31,7 +31,7 @@ export type GetItem =
       /** Neighbors beyond MAX_NEIGHBORS that were left out. */
       moreNeighbors?: number;
     }
-  | { ref: string; node: null; suggestion?: string };
+  | { ref: string; node: null; deleted?: boolean; suggestion?: string };
 
 export async function get(ctx: Context, store: GraphStore, input: GetInput): Promise<GetItem[]> {
   const max = await getSetting(store, ctx, 'get.max_keys');
@@ -47,7 +47,7 @@ export async function get(ctx: Context, store: GraphStore, input: GetInput): Pro
   for (const ref of input.keys) {
     const node = await findNode(ctx, store, parseRef(ctx, ref));
     if (!node || node.status === 'deleted') {
-      items.push({ ref, node: null, suggestion: await suggestFor(ctx, store, ref) });
+      items.push({ ref, node: null, deleted: node !== null, suggestion: await suggestFor(ctx, store, ref) });
       continue;
     }
     const item: GetItem = { ref, node, supersededByKey: await supersededByKey(ctx, store, node) };

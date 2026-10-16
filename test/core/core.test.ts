@@ -214,7 +214,12 @@ describe('link and get', () => {
   it('fetches several keys and suggests a fix for a typo', async () => {
     const items = await get(ctx, store, { keys: ['concept/roles', 'concept/permision'], neighbors: false });
     expect(items[0]?.node?.title).toBe('Roles');
-    expect(items[1]).toEqual({ ref: 'concept/permision', node: null, suggestion: 'concept/permissions' });
+    expect(items[1]).toEqual({
+      ref: 'concept/permision',
+      node: null,
+      deleted: false,
+      suggestion: 'concept/permissions',
+    });
   });
 
   it('caps keys per call with the get.max_keys setting', async () => {

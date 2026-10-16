@@ -20,7 +20,10 @@ export function registerRecent({ server, store, ctx }: Deps): void {
     (input) =>
       respond(async () => {
         const entries = await recent(ctx, store, input);
-        if (entries.length === 0) return 'Nothing recent.';
+        if (entries.length === 0) {
+          const scope = [input.since && `since ${input.since}`, input.mine && 'yours only'].filter(Boolean);
+          return scope.length ? `Nothing recent (${scope.join(', ')}).` : 'Nothing recent.';
+        }
         return entries.map((e) => `- ${titleLine(ctx, e.node)} · ${VERBS[e.kind]} ${e.at.slice(0, 10)}`).join('\n');
       }),
   );

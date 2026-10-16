@@ -55,13 +55,20 @@ describe('MCP server', () => {
 
   it('writes links with upsert and points out a missing parent', async () => {
     expect(
-      (await call('upsert', { type: 'task', title: 'Ship it', links: [{ type: 'part_of', to: 'plan/launch' }] })).text,
+      (
+        await call('upsert', {
+          type: 'task',
+          title: 'Ship it',
+          summary: 'Release v1.',
+          links: [{ type: 'part_of', to: 'plan/launch' }],
+        })
+      ).text,
     ).toBe(
       'Created task/ship-it (v1).\n' +
         'Linked: task/ship-it → part_of → plan/launch.\n' +
         'plan/launch does not exist yet; the link resolves when it is created.',
     );
-    expect((await call('upsert', { type: 'task', title: 'Loose end' })).text).toBe(
+    expect((await call('upsert', { type: 'task', title: 'Loose end', summary: 'Tidy up.' })).text).toBe(
       'Created task/loose-end (v1).\n' +
         'task/loose-end has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.',
     );
@@ -132,8 +139,8 @@ describe('MCP server', () => {
         '  Roles grant actions; groups hold roles. · 2 links · never verified',
     );
     expect((await call('search', { query: 'permission billing', level: 'title' })).text).toBe(
-      'No node matched all words of "permission billing". 1 partial match, check before relying on them:\n' +
-        '- concept/permissions [concept] Permission system',
+      'No node matched all words of "permission billing". 1 partial match; check it before relying on it:\n' +
+        '- concept/permissions [concept] Permission system (matched: permission)',
     );
 
     const got = (await call('get', { keys: ['concept/permissions'], neighbors: true })).text;

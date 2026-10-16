@@ -2,7 +2,10 @@ import type { Context } from '../context.js';
 import type { GraphStore, NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import type { RenderLevel } from './render.js';
-import { normalizeNodeType, normalizeTag } from './vocabulary.js';
+import { normalizeNodeType, normalizeTag, suggestType } from './vocabulary.js';
+
+/** How far down each word's own results to look when labelling partial hits. */
+const MATCHED_SCAN = 500;
 
 export interface SearchInput {
   query: string;
@@ -15,6 +18,8 @@ export interface SearchInput {
 export interface SearchHit {
   node: NodeRecord;
   edgeCount?: number;
+  /** For partial matches: which query words this hit matched. */
+  matched?: string[];
 }
 
 export interface SearchOutput {
@@ -23,6 +28,8 @@ export interface SearchOutput {
   total: number;
   /** No node matched every word, so these hits match only some of them. */
   partial: boolean;
+  /** The type filter names a type no node has; holds the closest one in use, if any. */
+  unknownType?: { type: string; suggestion: string | null };
 }
 
 /**
@@ -60,20 +67,38 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   };
   let result = await store.search({ ...base, match: 'all' });
   let partial = false;
-  // QUESTION(KAN-13): a minimum-match cutoff (say, at least half the words) would drop
-  // one-word hits from long queries, but FTS5 does not report how many terms a row
-  // matched. Worth a per-term count query, or is the "partial" label enough?
+  // No minimum-match cutoff: FTS5 doesn't say how many words a row matched, so partial hits are labelled instead.
   if (result.total === 0 && terms.length > 1) {
     result = await store.search({ ...base, match: 'any' });
     partial = result.total > 0;
+  }
+
+  let unknownType: SearchOutput['unknownType'];
+  if (result.total === 0 && base.type) {
+    const used = (await store.stats(ctx.namespaces)).nodeTypes.map((t) => t.name);
+    if (!used.includes(base.type)) unknownType = { type: base.type, suggestion: suggestType(base.type, used) };
+  }
+
+  // Which words each partial hit matched, one search per word, so the caller can judge relevance.
+  const matched = new Map<string, string[]>();
+  if (partial) {
+    for (const term of terms) {
+      const { nodes } = await store.search({ ...base, terms: [term], match: 'all', limit: MATCHED_SCAN });
+      for (const n of nodes) matched.set(n.id, [...(matched.get(n.id) ?? []), term]);
+    }
   }
 
   const wantsCounts = input.level === 'summary' || input.level === 'snippet';
   const counts = wantsCounts ? await store.edgeCounts(result.nodes.map((n) => n.id)) : undefined;
   return {
     query: input.query,
-    hits: result.nodes.map((node) => ({ node, edgeCount: counts?.get(node.id) ?? (wantsCounts ? 0 : undefined) })),
+    hits: result.nodes.map((node) => ({
+      node,
+      edgeCount: counts?.get(node.id) ?? (wantsCounts ? 0 : undefined),
+      matched: partial ? (matched.get(node.id) ?? []) : undefined,
+    })),
     total: result.total,
     partial,
+    unknownType,
   };
 }

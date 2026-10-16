@@ -9,7 +9,11 @@ What each MCP tool takes and returns. Responses are compact text (ADR 0011); ren
 | `snippet` | + the first 300 characters of the body |
 | `full` | + whole body, tags, aliases, properties, version, updated date |
 
-Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes behave as not found.
+Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes are left out of reads, and a tool asked for one by key says `<key> was deleted.` rather than not found.
+
+A node marked `outdated_or_wrong` shows `(flagged outdated or wrong)` on its title line, and at `full` a line saying when and what to do. The flag clears when someone edits or verifies the node.
+
+Tool results add a one-line hint when the tool knows something the caller would want: a dangling link, a loop, a property that was dropped (ADR 0016). Each hint states the fact and the next step, and none of them block the call.
 
 ## orient
 "Call first. Explains this knowledge graph, its house rules and where to start. Pass a few focus words about your task to get likely-relevant entries."
@@ -26,8 +30,8 @@ The preset (`minimal`, `standard`, `verbose`), intro, house rules and pinned key
 | Input | Type | Default | Notes |
 |---|---|---|---|
 | `query` | string | required | Plain words; matches word stems. Question words (what, is, how, the...) are dropped. Every word must match; if nothing does, any word may, and the header says `No node matched all words`. |
-| `type` | string | any | Normalized like writes. |
-| `tag` | string | any | |
+| `type` | string | any | Normalized like writes. A type no node has gets `No nodes have type "conept". Did you mean "concept"?` |
+| `tag` | string | any | A miss with filters names them, so you can retry without. |
 | `level` | render level | `summary` | |
 | `limit` | 1 to 50 | 10 | |
 
@@ -40,7 +44,13 @@ Ranked by FTS5 relevance (title weighs most), with at most a 10% boost for nodes
 - ...
 4 more: raise limit or add type.
 ```
-A miss on every word falls back to partial matches and says so:```No node matched all words of "permission billing". 1 partial match, check before relying on them:- concept/permissions [concept] Permission system```
+
+When no node matches every word, the results are partial matches and the header says so:
+
+```
+No node matched all words of "permission billing". 1 partial match; check it before relying on it:
+- concept/permissions [concept] Permission system (matched: permission)
+```
 
 ## get
 "Fetch one or more nodes by key. Optionally include directly linked nodes as titles."
@@ -66,7 +76,7 @@ Links:
 → references: concept/audit-log (missing)
 ```
 
-Not found: `Not found: concept/permision. Did you mean concept/permissions?`
+Not found: `Not found: concept/permision. Did you mean concept/permissions?` A deleted node: `concept/roles was deleted.`
 
 ## upsert
 "Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node; put it under its parent with links."
@@ -81,7 +91,7 @@ Not found: `Not found: concept/permision. Did you mean concept/permissions?`
 | `version` | integer | Apply only if the node is still at this version. |
 | `links` | list of `{type, to, note?}` | Edges from this node, written in the same call, like `link`. Added, never replaced. |
 
-Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did you mean" line when the type is new and close to an existing one, and a line per link. A new node with no parent link gets one more line saying so (ADR 0015).
+Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did you mean" line when the type is new and close to an existing one, and a line per link. A new node with no parent link gets one more line saying so (ADR 0015), and a new node with no summary gets one too, since search shows the summary. An update that drops properties names them: `Properties replaced; dropped status, order. Pass every property you want to keep.`
 
 ## link
 "Link two nodes with a typed edge, e.g. depends_on, part_of, references, related_to. The target may not exist yet."
@@ -92,7 +102,7 @@ Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did 
 | `type` | string | Normalized to `snake_case`. |
 | `note` | string | Short reason for the link. |
 
-Linking the same pair with the same type again updates the note. Returns `Linked: concept/a → depends_on → concept/b.`
+Linking the same pair with the same type again updates the note. Returns `Linked: concept/a → depends_on → concept/b.` One more line when the target was deleted (the link leads nowhere), is superseded (names the current node), or when a parent edge (`part_of`, `comments_on`, `candidate_for`) would make a loop.
 
 ## annotate
 "Leave a note or observation about a node. Saved as its own linked note; the node itself is unchanged. Prefer this to editing a node's body."
@@ -118,10 +128,10 @@ Creates a `note` node keyed from its title (`note/cache-is-5-min`, or `-2`, `-3`
 The old node becomes `superseded` and points at the replacement. Its links move to the replacement; a link that would duplicate one already there, or join the two nodes to each other, is soft-deleted instead. A `supersedes` edge from the replacement to the old node keeps the history visible. Returns `concept/access-model (new) supersedes concept/permissions. Moved 2 links.`
 
 ## verify, delete, feedback
-All three take `keys` (up to 50) and report keys they could not find on a second line.
+All three take `keys` (up to 50) and report keys they could not find, or that were already deleted, on further lines.
 
 - **verify:** "Mark nodes as checked and still correct." Sets the verified date; does not create a version.
-- **delete:** "Remove nodes from reads. History is kept. If something replaces the node, use supersede instead." Soft delete only.
+- **delete:** "Remove nodes from reads. History is kept. If something replaces the node, use supersede instead." Soft delete only. Lists the live nodes that still link to a deleted one, since those links now lead nowhere; notes about it are left out.
 - **feedback:** "Say which nodes helped." Takes `verdict`: `useful`, `not_useful` or `outdated_or_wrong`. Counters live on the node; `useful` also gives a small search boost and shows in `recent` (ADR 0005).
 
 ## recent
@@ -138,7 +148,7 @@ All three take `keys` (up to 50) and report keys they could not find on a second
 - note/cache-is-5-min [note] Cache is 5 min · created 2026-10-07
 ```
 
-Reads are not tracked (ADR 0004).
+Reads are not tracked (ADR 0004). An empty result names its filters: `Nothing recent (since 3d, yours only).`
 
 ## list_types
 "Node and edge types in use, with counts. Check before inventing a new type."
@@ -148,3 +158,5 @@ Node types: concept 12, how-to 4, note 3
 Edge types: depends_on 9, comments_on 3
 Also available: decision, related_to, part_of, supersedes, example_of, references
 ```
+
+Types that differ only by a plural or a separator get one more line: `Look alike: concept and concepts. Pick one and reuse it.`

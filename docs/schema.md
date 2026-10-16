@@ -40,6 +40,7 @@ CREATE TABLE nodes (
   not_useful_count INTEGER NOT NULL DEFAULT 0,
   wrong_count      INTEGER NOT NULL DEFAULT 0,
   last_useful_at   TEXT,
+  last_wrong_at    TEXT,                             -- reads warn until the next edit or verify (migration 002)
 
   UNIQUE (namespace, key)
 );

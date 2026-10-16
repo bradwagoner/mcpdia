@@ -139,6 +139,13 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         expect((await store.search({ ...q, terms: ['deploy'] })).nodes.map((n) => n.id)).toEqual([b.id, a.id]);
       });
 
+      it('stamps when a node was last marked outdated or wrong', async () => {
+        const n = await store.createNode(node({ key: 'note/c', title: 'C', aliases: [], tags: [] }));
+        await store.recordFeedback([n.id], 'outdated_or_wrong', '2030-01-01T00:00:00.000Z');
+        const [after] = await store.getNodesByIds([n.id]).then((m) => [...m.values()]);
+        expect([after?.wrongCount, after?.lastWrongAt]).toEqual([1, '2030-01-01T00:00:00.000Z']);
+      });
+
       it('matches prefixes when asked', async () => {
         expect((await store.search({ ...q, terms: ['perm'], prefix: true })).nodes[0]?.key).toBe('concept/permissions');
       });

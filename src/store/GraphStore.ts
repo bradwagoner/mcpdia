@@ -32,6 +32,8 @@ export interface NodeRecord {
   notUsefulCount: number;
   wrongCount: number;
   lastUsefulAt: string | null;
+  /** Last time someone marked it outdated or wrong. */
+  lastWrongAt: string | null;
 }
 
 /** The fields a caller can set on a node. */
@@ -170,7 +172,7 @@ export interface GraphStore {
   setStatus(id: string, status: NodeStatus, changedBy: string, supersededBy?: string): Promise<NodeRecord>;
   /** Sets last_verified_at without creating a new version. */
   markVerified(ids: string[], at: string): Promise<void>;
-  /** Bumps the verdict's counter; 'useful' also sets last_useful_at. */
+  /** Bumps the verdict's counter; 'useful' also sets last_useful_at, 'outdated_or_wrong' last_wrong_at. */
   recordFeedback(ids: string[], verdict: FeedbackVerdict, at: string): Promise<void>;
   /** Active nodes by latest write or useful mark, newest first. */
   recent(query: RecentQuery): Promise<RecentEntry[]>;

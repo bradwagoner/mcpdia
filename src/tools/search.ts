@@ -21,14 +21,23 @@ export function registerSearch({ server, store, ctx }: Deps): void {
     (input) =>
       respond(async () => {
         const out = await search(ctx, store, input);
+        if (out.unknownType) {
+          const { type, suggestion } = out.unknownType;
+          return `No nodes have type "${type}".${suggestion ? ` Did you mean "${suggestion}"?` : ' list_types shows the types in use.'}`;
+        }
         if (out.total === 0) {
-          return `No results for "${out.query}". Try fewer or different words.`;
+          const filters = [input.type && `type ${input.type}`, input.tag && `tag ${input.tag}`].filter(Boolean);
+          return filters.length
+            ? `No results for "${out.query}" with ${filters.join(' and ')}. Try without the filter, or other words.`
+            : `No results for "${out.query}". Try fewer or different words.`;
         }
         const count = out.total > out.hits.length ? `${out.hits.length} of ${out.total}` : `${out.total}`;
         const header = out.partial
-          ? `No node matched all words of "${out.query}". ${count} partial match${out.total === 1 ? '' : 'es'}, check before relying on them:`
+          ? `No node matched all words of "${out.query}". ${count} ${out.total === 1 ? 'partial match; check it before relying on it' : 'partial matches; check them before relying on them'}:`
           : `${count} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
-        const entries = out.hits.map((h) => `- ${renderStub(ctx, h.node, input.level, { edgeCount: h.edgeCount })}`);
+        const entries = out.hits.map(
+          (h) => `- ${renderStub(ctx, h.node, input.level, { edgeCount: h.edgeCount, matched: h.matched })}`,
+        );
         const lines = [header, ...entries];
         if (out.total > out.hits.length) {
           lines.push(`${out.total - out.hits.length} more: raise limit or add type.`);

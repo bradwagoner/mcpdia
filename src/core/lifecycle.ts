@@ -2,6 +2,7 @@ import type { Context } from '../context.js';
 import type { FeedbackVerdict, GraphStore, NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import { cleanKey, displayKey, parseRef, suggestKey, uniqueKey } from './keys.js';
+import { COMMENTS_ON } from './annotate.js';
 import { findNode, requireActive, supersededByKey } from './nodes.js';
 import { writeNode, type NodeWrite } from './upsert.js';
 import { normalizeNodeType } from './vocabulary.js';
@@ -94,6 +95,8 @@ export interface BatchOutput {
   notFound: string[];
   /** Superseded keys the operation skipped, each with its replacement. */
   superseded: string[];
+  /** Keys of nodes that were already deleted. */
+  deleted: string[];
 }
 
 /** "I checked and it is still right": bumps last_verified_at. */
@@ -106,11 +109,26 @@ export async function verify(ctx: Context, store: GraphStore, keys: string[]): P
   return out;
 }
 
+export interface DeleteOutput extends BatchOutput {
+  /** Live nodes that still link to a deleted one: those links now lead nowhere. */
+  dangling: { key: string; from: string[] }[];
+}
+
 /** Soft delete only: the node and its history stay in the store. */
-export async function softDelete(ctx: Context, store: GraphStore, keys: string[]): Promise<BatchOutput> {
+export async function softDelete(ctx: Context, store: GraphStore, keys: string[]): Promise<DeleteOutput> {
   const { nodes, out } = await resolveBatch(ctx, store, keys);
-  for (const node of nodes) await store.setStatus(node.id, 'deleted', ctx.caller);
-  return out;
+  const dangling: DeleteOutput['dangling'] = [];
+  const gone = new Set(nodes.map((n) => n.id));
+  for (const node of nodes) {
+    await store.setStatus(node.id, 'deleted', ctx.caller);
+    const from = (await store.neighbors(node.id))
+      // Notes go with the node they comment on, so they don't count as dangling.
+      .filter((n) => n.direction === 'in' && n.edge.type !== COMMENTS_ON && n.other && !gone.has(n.other.id))
+      .filter((n) => ctx.namespaces.includes(n.otherNamespace))
+      .map((n) => `${displayKey(ctx, n.otherNamespace, n.otherKey)} (${n.edge.type})`);
+    if (from.length) dangling.push({ key: displayKey(ctx, node.namespace, node.key), from });
+  }
+  return { ...out, dangling };
 }
 
 export async function feedback(
@@ -137,7 +155,7 @@ async function resolveBatch(ctx: Context, store: GraphStore, keys: string[], all
   if (keys.length === 0) throw new UserError('Pass at least one key.');
   if (keys.length > MAX_BATCH) throw new UserError(`Too many keys: ${keys.length}. Up to ${MAX_BATCH} per call.`);
   const nodes: NodeRecord[] = [];
-  const out: BatchOutput = { done: [], notFound: [], superseded: [] };
+  const out: BatchOutput = { done: [], notFound: [], superseded: [], deleted: [] };
   for (const key of keys) {
     const node = await findNode(ctx, store, parseRef(ctx, key));
     const usable = node?.status === 'active' || (allowSuperseded && node?.status === 'superseded');
@@ -148,6 +166,8 @@ async function resolveBatch(ctx: Context, store: GraphStore, keys: string[], all
     } else if (node?.status === 'superseded') {
       const by = await supersededByKey(ctx, store, node);
       out.superseded.push(by ? `${key} (now ${by})` : key);
+    } else if (node?.status === 'deleted') {
+      out.deleted.push(key);
     } else {
       out.notFound.push(key);
     }

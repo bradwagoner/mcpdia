@@ -106,7 +106,7 @@ describe('supersede', () => {
 describe('verify, delete and feedback', () => {
   it('verifies without a new version', async () => {
     const out = await verify(ctx, store, ['concept/permissions', 'concept/nope']);
-    expect(out).toEqual({ done: ['concept/permissions'], notFound: ['concept/nope'], superseded: [] });
+    expect(out).toEqual({ done: ['concept/permissions'], notFound: ['concept/nope'], superseded: [], deleted: [] });
     const n = await node('concept/permissions');
     expect(n.lastVerifiedAt).not.toBeNull();
     expect(n.version).toBe(1);
@@ -117,8 +117,8 @@ describe('verify, delete and feedback', () => {
     expect((await node('concept/roles')).status).toBe('deleted');
     expect((await search(ctx, store, { query: 'roles', level: 'title', limit: 10 })).total).toBe(0);
     const [item] = await get(ctx, store, { keys: ['concept/roles'], neighbors: false });
-    expect(item?.node).toBeNull();
-    expect((await softDelete(ctx, store, ['concept/roles'])).notFound).toEqual(['concept/roles']);
+    expect(item).toMatchObject({ node: null, deleted: true });
+    expect((await softDelete(ctx, store, ['concept/roles'])).deleted).toEqual(['concept/roles']);
   });
 
   it('counts each verdict', async () => {
@@ -138,6 +138,7 @@ describe('verify, delete and feedback', () => {
       done: [],
       notFound: [],
       superseded: ['concept/roles (now concept/permissions)'],
+      deleted: [],
     });
   });
 });
