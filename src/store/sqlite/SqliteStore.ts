@@ -78,12 +78,7 @@ export class SqliteStore implements GraphStore {
       this.writeAliasesAndTags(id, node.aliases, node.tags);
       this.recordVersion(id, 'create', node.author, now);
       // Late-bound edges (ADR 0007): anything already pointing at this key now resolves.
-      this.db
-        .prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL')
-        .run(id, node.namespace, node.key);
-      this.db
-        .prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL')
-        .run(id, node.namespace, node.key);
+      this.resolveWaitingEdges(id, node.namespace, node.key);
     })();
     return (await this.getNodeById(id))!;
   }
@@ -132,6 +127,12 @@ export class SqliteStore implements GraphStore {
         )
         .run(status, status === 'superseded' ? (supersededBy ?? null) : null, changedBy, now, id);
       this.recordVersion(id, changeType, changedBy, now);
+      if (status === 'active') {
+        // Links made while it was deleted were stored unresolved (resolveId skips deleted nodes).
+        const row = this.db.prepare('SELECT namespace, key FROM nodes WHERE id = ?').get(id) as
+          { namespace: string; key: string } | undefined;
+        if (row) this.resolveWaitingEdges(id, row.namespace, row.key);
+      }
     })();
     return (await this.getNodeById(id))!;
   }
@@ -219,8 +220,9 @@ export class SqliteStore implements GraphStore {
     const match = q.terms
       .map((t) => `"${t.replaceAll('"', '""')}"${q.prefix ? '*' : ''}`)
       .join(q.match === 'all' ? ' AND ' : ' OR ');
-    const where = [`nodes_fts MATCH ?`, `n.status = 'active'`, `n.namespace IN (${marks(q.namespaces)})`];
-    const params: unknown[] = [match, ...q.namespaces];
+    const statuses = q.statuses ?? ['active'];
+    const where = [`nodes_fts MATCH ?`, `n.status IN (${marks(statuses)})`, `n.namespace IN (${marks(q.namespaces)})`];
+    const params: unknown[] = [match, ...statuses, ...q.namespaces];
     if (q.type) {
       where.push('n.type = ?');
       params.push(q.type);
@@ -413,6 +415,15 @@ export class SqliteStore implements GraphStore {
       .run(id, node.version, JSON.stringify(node), node.body?.length ?? 0, changeType, changedBy, at);
   }
 
+  private resolveWaitingEdges(id: string, namespace: string, key: string): void {
+    this.db
+      .prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL')
+      .run(id, namespace, key);
+    this.db
+      .prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL')
+      .run(id, namespace, key);
+  }
+
   private resolveId(namespace: string, key: string): string | null {
     const row = this.db
       .prepare(`SELECT id FROM nodes WHERE namespace = ? AND key = ? AND status != 'deleted'`)
@@ -531,7 +542,7 @@ function toEdge(r: EdgeRow): EdgeRecord {
 // Ids per lookup in hydrate(), well under SQLite's 32,766 variable limit.
 const HYDRATE_BATCH = 10_000;
 
-function marks(values: unknown[]): string {
+function marks(values: readonly unknown[]): string {
   return values.map(() => '?').join(', ');
 }
 

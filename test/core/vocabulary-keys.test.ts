@@ -6,7 +6,7 @@ import {
   normalizeEdgeType,
   normalizeNodeType,
   normalizeTag,
-  suggestType,
+  squashType,
 } from '../../src/core/vocabulary.js';
 import { ulid } from '../../src/ulid.js';
 
@@ -20,12 +20,10 @@ describe('vocabulary', () => {
     expect(normalizeAlias('  Access   Control ')).toBe('access control');
   });
 
-  it('suggests a close existing type, never the same one', () => {
-    expect(suggestType('tickets', ['ticket', 'concept'])).toBe('ticket');
-    expect(suggestType('howto', ['how-to'])).toBe('how-to');
-    expect(suggestType('concpet', ['concept'])).toBe('concept');
-    expect(suggestType('ticket', ['ticket'])).toBeNull();
-    expect(suggestType('decision', ['concept', 'how-to'])).toBeNull();
+  it('squashes separators and a plural s for lookalike checks', () => {
+    expect(squashType('how-tos')).toBe(squashType('howto'));
+    expect(squashType('tickets')).toBe(squashType('ticket'));
+    expect(squashType('concept')).not.toBe(squashType('decision'));
   });
 });
 

@@ -11,7 +11,6 @@ import {
   normalizeTag,
   PARENT_EDGE_TYPES,
   STARTER_NODE_TYPES,
-  suggestType,
 } from './vocabulary.js';
 
 export interface UpsertInput {
@@ -33,13 +32,15 @@ export interface UpsertInput {
 export interface UpsertOutput {
   node: NodeRecord;
   created: boolean;
-  /** "Did you mean" for a type that is new to this graph. */
+  /** Set when the type is new to this graph. */
   typeHint?: string;
   links: LinkOutput[];
   /** Set when a node was created with nothing above it. */
   parentHint?: string;
   /** Set when a node was created without a summary, which is what search shows. */
   summaryHint?: string;
+  /** The key belonged to a deleted node, which this call brought back. */
+  restored?: boolean;
   /** Property names an update dropped, since passing properties replaces them all. */
   removedProperties?: string[];
 }
@@ -104,7 +105,14 @@ export async function writeNode(ctx: Context, store: GraphStore, input: UpsertIn
       const removed = input.properties
         ? Object.keys(existing.properties).filter((k) => !Object.hasOwn(fields.properties, k))
         : [];
-      return { node, created: false, typeHint, removedProperties: removed.length ? removed : undefined };
+      return {
+        node,
+        created: false,
+        // The node already had this type; it only looks new because the node was deleted.
+        typeHint: existing.type === type ? undefined : typeHint,
+        restored: existing.status === 'deleted' || undefined,
+        removedProperties: removed.length ? removed : undefined,
+      };
     }
     if (ref.kind === 'id') throw new UserError(`Not found: ${ref.id}.`, 'Pass a key to create a node.');
     const namespace = writableNamespace(ctx, ref);
@@ -136,7 +144,6 @@ async function update(
   fields: Required<NodePatch>,
 ): Promise<NodeRecord> {
   const shown = displayKey(ctx, existing.namespace, existing.key);
-  if (existing.status === 'deleted') throw new UserError(`${shown} was deleted.`, 'Use a different key.');
   if (existing.status === 'superseded') {
     const next = await supersededByKey(ctx, store, existing);
     throw new UserError(
@@ -154,7 +161,9 @@ async function update(
   if (input.tags !== undefined) patch.tags = fields.tags;
 
   try {
-    return await store.updateNode(existing.id, patch, ctx.caller, input.version);
+    const node = await store.updateNode(existing.id, patch, ctx.caller, input.version);
+    // Writing to a deleted key brings that node back, history and all, rather than starting a second one.
+    return existing.status === 'deleted' ? await store.setStatus(existing.id, 'active', ctx.caller) : node;
   } catch (err) {
     if (err instanceof VersionConflictError) {
       throw new UserError(
@@ -168,9 +177,8 @@ async function update(
 
 async function typeSuggestion(ctx: Context, store: GraphStore, type: string): Promise<string | undefined> {
   const used = (await store.stats(ctx.namespaces)).nodeTypes.map((t) => t.name);
-  if (used.includes(type)) return undefined;
-  const near = suggestType(type, unique([...used, ...STARTER_NODE_TYPES]));
-  return near ? `Type "${type}" is new here. Did you mean "${near}"?` : undefined;
+  if (used.includes(type) || STARTER_NODE_TYPES.includes(type)) return undefined;
+  return `Type "${type}" is new here. list_types shows the types in use.`;
 }
 
 function unique(values: string[]): string[] {

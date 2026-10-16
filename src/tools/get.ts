@@ -15,11 +15,16 @@ export function registerGet({ server, store, ctx }: Deps): void {
         level: z.enum(RENDER_LEVELS).default('full'),
         neighbors: z.boolean().default(false).describe('Add nodes one link away.'),
         neighbor_level: z.enum(RENDER_LEVELS).default('title'),
+        all_status: z.boolean().default(false).describe('Return deleted nodes too.'),
       },
     },
     (input) =>
       respond(async () => {
-        const items = await get(ctx, store, { keys: input.keys, neighbors: input.neighbors });
+        const items = await get(ctx, store, {
+          keys: input.keys,
+          neighbors: input.neighbors,
+          allStatus: input.all_status,
+        });
         return items.map((item) => renderItem(ctx, item, input.level, input.neighbor_level)).join('\n\n---\n\n');
       }),
   );
@@ -27,8 +32,9 @@ export function registerGet({ server, store, ctx }: Deps): void {
 
 function renderItem(ctx: Context, item: GetItem, level: RenderLevel, neighborLevel: RenderLevel): string {
   if (!item.node) {
-    const what = item.deleted ? `${item.ref} was deleted.` : `Not found: ${item.ref}.`;
-    return `${what}${item.suggestion ? ` Did you mean ${item.suggestion}?` : ''}`;
+    return item.deleted
+      ? `${item.ref} was deleted; all_status: true shows it.`
+      : `Not found: ${item.ref}. search finds nodes by their words.`;
   }
   const lines = [renderStub(ctx, item.node, level, { supersededByKey: item.supersededByKey })];
   if (item.neighbors?.length) {

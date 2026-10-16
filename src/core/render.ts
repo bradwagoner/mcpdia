@@ -40,6 +40,7 @@ export function titleLine(ctx: Context, node: NodeRecord): string {
 export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, extras: RenderExtras = {}): string {
   if (level === 'full') return renderFull(ctx, node, extras);
   const markers: string[] = [];
+  if (node.status === 'deleted') markers.push('deleted');
   if (extras.supersededByKey) markers.push(`superseded by ${extras.supersededByKey}`);
   if (flaggedWrong(node)) markers.push('flagged outdated or wrong');
   if (extras.matched?.length) markers.push(`matched: ${extras.matched.join(', ')}`);
@@ -62,6 +63,7 @@ export function renderFull(ctx: Context, node: NodeRecord, extras: RenderExtras 
   const meta = [`v${node.version}`, `updated ${day(node.updatedAt)}`];
   if (node.lastVerifiedAt) meta.push(`verified ${day(node.lastVerifiedAt)}`);
   const lines = [`${titleLine(ctx, node)}   ${meta.join(' · ')}`];
+  if (node.status === 'deleted') lines.push(`Deleted on ${day(node.updatedAt)}. Upsert this key to restore it.`);
   if (extras.supersededByKey) lines.push(`Superseded by ${extras.supersededByKey}`);
   if (flaggedWrong(node)) {
     lines.push(

@@ -3,7 +3,7 @@ import type { EdgeRecord, GraphStore, NodeRecord } from '../store/GraphStore.js'
 import { UserError } from './errors.js';
 import { displayKey, parseRef } from './keys.js';
 import { findNode, supersededByKey, writableNamespace } from './nodes.js';
-import { normalizeEdgeType, PARENT_EDGE_TYPES, STARTER_EDGE_TYPES, suggestType } from './vocabulary.js';
+import { normalizeEdgeType, PARENT_EDGE_TYPES, STARTER_EDGE_TYPES } from './vocabulary.js';
 
 export interface LinkInput {
   from: string;
@@ -49,7 +49,7 @@ export async function link(ctx: Context, store: GraphStore, input: LinkInput): P
   const { to, toNode } = await linkTarget(ctx, store, input.to);
 
   const used = (await store.stats(ctx.namespaces)).edgeTypes.map((t) => t.name);
-  const near = used.includes(type) ? null : suggestType(type, [...new Set([...used, ...STARTER_EDGE_TYPES])]);
+  const isNew = !used.includes(type) && !STARTER_EDGE_TYPES.includes(type);
 
   const { edge, created } = await store.upsertEdge({
     fromNamespace: from.namespace,
@@ -67,7 +67,7 @@ export async function link(ctx: Context, store: GraphStore, input: LinkInput): P
     fromKey: displayKey(ctx, from.namespace, from.key),
     toKey: displayKey(ctx, to.namespace, to.key),
     toMissing: !toNode,
-    typeHint: near ? `Edge type "${type}" is new here. Did you mean "${near}"?` : undefined,
+    typeHint: isNew ? `Edge type "${type}" is new here. list_types shows the types in use.` : undefined,
     targetHint: await targetHint(ctx, store, from, toNode, type),
   };
 }

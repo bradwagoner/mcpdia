@@ -9,7 +9,7 @@ What each MCP tool takes and returns. Responses are compact text (ADR 0011); ren
 | `snippet` | + the first 300 characters of the body |
 | `full` | + whole body, tags, aliases, properties, version, updated date |
 
-Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes are left out of reads, and a tool asked for one by key says `<key> was deleted.` rather than not found.
+Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes are left out of reads, and a tool asked for one by key says `<key> was deleted.` rather than not found. `get` and `search` take `all_status: true` to include deleted and superseded nodes, marked `(deleted)` or `(superseded by <key>)`; writing to a deleted key with `upsert` restores it (ADR 0017).
 
 A node marked `outdated_or_wrong` shows `(flagged outdated or wrong)` on its title line, and at `full` a line saying when and what to do. The flag clears when someone edits or verifies the node.
 
@@ -30,10 +30,11 @@ The preset (`minimal`, `standard`, `verbose`), intro, house rules and pinned key
 | Input | Type | Default | Notes |
 |---|---|---|---|
 | `query` | string | required | Plain words; matches word stems. Question words (what, is, how, the...) are dropped. Every word must match; if nothing does, any word may, and the header says `No node matched all words`. |
-| `type` | string | any | Normalized like writes. A type no node has gets `No nodes have type "conept". Did you mean "concept"?` |
+| `type` | string | any | Normalized like writes. A type no node has gets `No nodes have type "conept". list_types shows the types in use.` |
 | `tag` | string | any | A miss with filters names them, so you can retry without. |
 | `level` | render level | `summary` | |
 | `limit` | 1 to 50 | 10 | |
+| `all_status` | boolean | false | Include superseded and deleted nodes. |
 
 Ranked by FTS5 relevance (title weighs most), with at most a 10% boost for nodes marked useful.
 
@@ -61,6 +62,7 @@ No node matched all words of "permission billing". 1 partial match; check it bef
 | `level` | render level | `full` | |
 | `neighbors` | boolean | false | Adds nodes one link away. |
 | `neighbor_level` | render level | `title` | |
+| `all_status` | boolean | false | Return deleted nodes too; at `full` they say when they were deleted. |
 
 Neighbors are grouped by direction and edge type, capped at 20 with a `+N more` line. A link to a node that does not exist yet shows `(missing)`. Several nodes are separated by `---`.
 
@@ -76,14 +78,14 @@ Links:
 → references: concept/audit-log (missing)
 ```
 
-Not found: `Not found: concept/permision. Did you mean concept/permissions?` A deleted node: `concept/roles was deleted.`
+Not found: `Not found: concept/permision. search finds nodes by their words.` A deleted node: `concept/roles was deleted; all_status: true shows it.`
 
 ## upsert
 "Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node; put it under its parent with links."
 
 | Input | Type | Notes |
 |---|---|---|
-| `key` | string | Omit to create; the key is built from type and title (ADR 0012). |
+| `key` | string | Omit to create; the key is built from type and title (ADR 0012). A deleted node's key restores that node (ADR 0017). |
 | `type`, `title` | string | Required. |
 | `summary`, `body` | string | |
 | `tags`, `aliases` | list of strings | Replace the current lists when passed. |
@@ -91,7 +93,7 @@ Not found: `Not found: concept/permision. Did you mean concept/permissions?` A d
 | `version` | integer | Apply only if the node is still at this version. |
 | `links` | list of `{type, to, note?}` | Edges from this node, written in the same call, like `link`. Added, never replaced. |
 
-Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did you mean" line when the type is new and close to an existing one, and a line per link. A new node with no parent link gets one more line saying so (ADR 0015), and a new node with no summary gets one too, since search shows the summary. An update that drops properties names them: `Properties replaced; dropped status, order. Pass every property you want to keep.`
+Returns `Created concept/permissions (v1).`, `Updated ... (v2).` or `Restored ... (v5).`, plus `Type "tickets" is new here. list_types shows the types in use.` when no node has the type yet and it isn't a starter type, and a line per link. A new node with no parent link gets one more line saying so (ADR 0015), and a new node with no summary gets one too, since search shows the summary. An update that drops properties names them: `Properties replaced; dropped status, order. Pass every property you want to keep.`
 
 ## link
 "Link two nodes with a typed edge, e.g. depends_on, part_of, references, related_to. The target may not exist yet."
@@ -102,7 +104,7 @@ Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did 
 | `type` | string | Normalized to `snake_case`. |
 | `note` | string | Short reason for the link. |
 
-Linking the same pair with the same type again updates the note. Returns `Linked: concept/a → depends_on → concept/b.` One more line when the target was deleted (the link leads nowhere), is superseded (names the current node), or when a parent edge (`part_of`, `comments_on`, `candidate_for`) would make a loop.
+Linking the same pair with the same type again updates the note. Returns `Linked: concept/a → depends_on → concept/b.` One more line when the edge type is new to the graph, when the target was deleted (the link leads nowhere), is superseded (names the current node), or when a parent edge (`part_of`, `comments_on`, `candidate_for`) would make a loop.
 
 ## annotate
 "Leave a note or observation about a node. Saved as its own linked note; the node itself is unchanged. Prefer this to editing a node's body."

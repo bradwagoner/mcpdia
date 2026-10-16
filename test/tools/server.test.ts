@@ -65,6 +65,7 @@ describe('MCP server', () => {
       ).text,
     ).toBe(
       'Created task/ship-it (v1).\n' +
+        'Type "task" is new here. list_types shows the types in use.\n' +
         'Linked: task/ship-it → part_of → plan/launch.\n' +
         'plan/launch does not exist yet; the link resolves when it is created.',
     );
@@ -156,7 +157,7 @@ describe('MCP server', () => {
 
   it('reports problems as one line with the error flag', async () => {
     const missing = await call('get', { keys: ['concept/nope'] });
-    expect(missing).toEqual({ text: 'Not found: concept/nope.', isError: false });
+    expect(missing).toEqual({ text: 'Not found: concept/nope. search finds nodes by their words.', isError: false });
 
     const bad = await call('link', { from: 'concept/nope', to: 'concept/x', type: 'part_of' });
     expect(bad.isError).toBe(true);

@@ -16,7 +16,7 @@ This file does two jobs: it states what each release will and will not include, 
 - MCP tools named for intent (ADR 0008): `orient`, `search`, `get`, `upsert`, `annotate`, `link`, `supersede`, `verify`, `delete` (soft), `list_types`, `recent`, `feedback`, plus one `maintain` entry point. Count follows distinct intents; descriptions stay short. Exact contracts are still to be drafted.
 - Render levels (`title` / `summary` / `snippet` / `full`) on all read tools
 - Full-text search (SQLite FTS5)
-- Type registry with normalization and "did you mean?" hints
+- Type registry with normalization, and a hint when a type is new (ADR 0018)
 - Configurable `orient` (presets: `minimal`, `standard`, `verbose`)
 - Stable keys, namespaces, source, author, versioning, soft delete
 - Late-bound edges (namespace + key references with nullable resolved ids), so multi-dataset support needs no schema change later (ADR 0007)
@@ -63,6 +63,8 @@ This file does two jobs: it states what each release will and will not include, 
 Newest first. Each entry: what shipped, what changed from the plan, what we learned.
 
 ### Unreleased
+- No guesses (2026-10-16): tools no longer answer with "did you mean". A new type, an unknown type filter or a missing key is stated as a fact with where to look (ADR 0018).
+- Deleted nodes (2026-10-16, #31): `get` and `search` take `all_status` to read deleted and superseded nodes, and `upsert` on a deleted key restores the node instead of refusing (ADR 0017).
 - Tool messages (2026-10-16, #10, #11): results now say what the server knows: partial search matches with the words they matched, nodes flagged outdated or wrong, deleted and superseded keys, dangling links after a delete, parent loops, dropped properties and missing summaries (ADR 0016). Question words like "what is" are dropped from queries. Migration 002 adds `last_wrong_at`.
 - Links on create (2026-10-15, #30): `upsert` takes `links` and writes the node's edges in the same call, and its result points out a new node with no parent (ADR 0015).
 - Repo cleanup (2026-10-13): removed the planning handoff document (its decisions live in the ADRs), untracked IntelliJ project files, and relabelled the README feature list so planned work is marked as planned.

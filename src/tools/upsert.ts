@@ -31,7 +31,9 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
       respond(async () => {
         const out = await upsert(ctx, store, input);
         const key = displayKey(ctx, out.node.namespace, out.node.key);
-        const lines = [`${out.created ? 'Created' : 'Updated'} ${key} (v${out.node.version}).`];
+        const verb = out.created ? 'Created' : out.restored ? 'Restored' : 'Updated';
+        const lines = [`${verb} ${key} (v${out.node.version}).`];
+        if (out.restored) lines.push('It was deleted; fields you did not pass kept their old values.');
         if (out.typeHint) lines.push(out.typeHint);
         if (out.removedProperties) {
           lines.push(

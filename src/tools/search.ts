@@ -16,14 +16,14 @@ export function registerSearch({ server, store, ctx }: Deps): void {
         tag: z.string().optional().describe('Only nodes with this tag.'),
         level: z.enum(RENDER_LEVELS).default('summary'),
         limit: z.number().int().min(1).max(50).default(10),
+        all_status: z.boolean().default(false).describe('Include superseded and deleted nodes.'),
       },
     },
     (input) =>
       respond(async () => {
-        const out = await search(ctx, store, input);
+        const out = await search(ctx, store, { ...input, allStatus: input.all_status });
         if (out.unknownType) {
-          const { type, suggestion } = out.unknownType;
-          return `No nodes have type "${type}".${suggestion ? ` Did you mean "${suggestion}"?` : ' list_types shows the types in use.'}`;
+          return `No nodes have type "${out.unknownType}". list_types shows the types in use.`;
         }
         if (out.total === 0) {
           const filters = [input.type && `type ${input.type}`, input.tag && `tag ${input.tag}`].filter(Boolean);
@@ -36,7 +36,12 @@ export function registerSearch({ server, store, ctx }: Deps): void {
           ? `No node matched all words of "${out.query}". ${count} ${out.total === 1 ? 'partial match; check it before relying on it' : 'partial matches; check them before relying on them'}:`
           : `${count} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
         const entries = out.hits.map(
-          (h) => `- ${renderStub(ctx, h.node, input.level, { edgeCount: h.edgeCount, matched: h.matched })}`,
+          (h) =>
+            `- ${renderStub(ctx, h.node, input.level, {
+              edgeCount: h.edgeCount,
+              matched: h.matched,
+              supersededByKey: h.supersededByKey,
+            })}`,
         );
         const lines = [header, ...entries];
         if (out.total > out.hits.length) {

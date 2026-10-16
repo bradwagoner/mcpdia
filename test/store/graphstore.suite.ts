@@ -160,6 +160,14 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         expect(await wrongAt()).toBeNull();
       });
 
+      it('searches other statuses only when asked', async () => {
+        const n = await store.createNode(node({ key: 'note/gone', title: 'Vanished widget', aliases: [], tags: [] }));
+        await store.setStatus(n.id, 'deleted', 'test');
+        expect((await store.search({ ...q, terms: ['vanished'] })).total).toBe(0);
+        const all = await store.search({ ...q, terms: ['vanished'], statuses: ['active', 'deleted'] });
+        expect(all.nodes.map((x) => x.status)).toEqual(['deleted']);
+      });
+
       it('limits a search to given ids', async () => {
         const all = await store.search({ ...q, terms: ['permission'] });
         const first = all.nodes[0]!.id;
@@ -201,6 +209,20 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         note: null,
         source: 'local',
         author: 'local',
+      });
+
+      it('resolves links made while a node was deleted once it is restored', async () => {
+        await store.createNode(node());
+        const b = await store.createNode(node({ key: 'concept/roles', title: 'Roles' }));
+        await store.setStatus(b.id, 'deleted', 'local');
+        await store.upsertEdge(edge('concept/permissions', 'concept/roles'));
+        await store.upsertEdge(edge('concept/roles', 'concept/permissions', 'references'));
+        expect((await store.listEdges(['default'])).every((e) => e.toId === null || e.fromId === null)).toBe(true);
+
+        await store.setStatus(b.id, 'active', 'local');
+        const edges = await store.listEdges(['default']);
+        expect(edges.find((e) => e.type === 'depends_on')!.toId).toBe(b.id);
+        expect(edges.find((e) => e.type === 'references')!.fromId).toBe(b.id);
       });
 
       it('lists every node by namespace, any status, and the active edges', async () => {
