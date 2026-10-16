@@ -25,9 +25,7 @@ export interface RenderExtras {
  * An edit or a verify clears the warning; the count stays on record.
  */
 export function flaggedWrong(node: NodeRecord): boolean {
-  const at = node.lastWrongAt;
-  if (!at) return false;
-  return at >= node.updatedAt && (!node.lastVerifiedAt || at > node.lastVerifiedAt);
+  return node.lastWrongAt !== null;
 }
 
 /** `concept/permissions [concept] Permission system` */
@@ -70,6 +68,7 @@ export function renderFull(ctx: Context, node: NodeRecord, extras: RenderExtras 
       `Flagged outdated or wrong on ${day(node.lastWrongAt!)}. Check it before relying on it; fix it with upsert, or verify it if it is still right.`,
     );
   }
+  if (extras.matched?.length) lines.push(`Matched: ${extras.matched.join(', ')}`);
   if (node.summary) lines.push(node.summary);
 
   const labels: string[] = [];

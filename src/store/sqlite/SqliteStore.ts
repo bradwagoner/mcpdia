@@ -98,7 +98,7 @@ export class SqliteStore implements GraphStore {
       this.db
         .prepare(
           `UPDATE nodes SET type = ?, title = ?, summary = ?, body = ?, properties = ?,
-                  version = version + 1, updated_by = ?, updated_at = ?
+                  version = version + 1, updated_by = ?, updated_at = ?, last_wrong_at = NULL
             WHERE id = ?`,
         )
         .run(
@@ -138,7 +138,9 @@ export class SqliteStore implements GraphStore {
 
   async markVerified(ids: string[], at: string): Promise<void> {
     if (ids.length === 0) return;
-    this.db.prepare(`UPDATE nodes SET last_verified_at = ? WHERE id IN (${marks(ids)})`).run(at, ...ids);
+    this.db
+      .prepare(`UPDATE nodes SET last_verified_at = ?, last_wrong_at = NULL WHERE id IN (${marks(ids)})`)
+      .run(at, ...ids);
   }
 
   async recordFeedback(ids: string[], verdict: FeedbackVerdict, at: string): Promise<void> {
@@ -222,6 +224,10 @@ export class SqliteStore implements GraphStore {
     if (q.type) {
       where.push('n.type = ?');
       params.push(q.type);
+    }
+    if (q.ids) {
+      where.push(`n.id IN (${marks(q.ids)})`);
+      params.push(...q.ids);
     }
     if (q.tag) {
       where.push('EXISTS (SELECT 1 FROM node_tags t WHERE t.node_id = n.id AND t.tag = ?)');

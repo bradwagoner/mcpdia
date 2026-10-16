@@ -146,6 +146,28 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         expect([after?.wrongCount, after?.lastWrongAt]).toEqual([1, '2030-01-01T00:00:00.000Z']);
       });
 
+      it('clears the outdated mark on the next edit or verify, whatever the clock says', async () => {
+        const n = await store.createNode(node({ key: 'note/d', title: 'D', aliases: [], tags: [] }));
+        const wrongAt = async () => (await store.getNodesByIds([n.id])).get(n.id)?.lastWrongAt;
+        const at = '2000-01-01T00:00:00.000Z';
+        await store.recordFeedback([n.id], 'outdated_or_wrong', at);
+        await store.updateNode(n.id, { title: 'D2' }, 'test');
+        expect(await wrongAt()).toBeNull();
+        await store.markVerified([n.id], at);
+        await store.recordFeedback([n.id], 'outdated_or_wrong', at);
+        expect(await wrongAt()).toBe(at);
+        await store.markVerified([n.id], at);
+        expect(await wrongAt()).toBeNull();
+      });
+
+      it('limits a search to given ids', async () => {
+        const all = await store.search({ ...q, terms: ['permission'] });
+        const first = all.nodes[0]!.id;
+        expect((await store.search({ ...q, terms: ['permission'], ids: [first] })).nodes.map((n) => n.id)).toEqual([
+          first,
+        ]);
+      });
+
       it('matches prefixes when asked', async () => {
         expect((await store.search({ ...q, terms: ['perm'], prefix: true })).nodes[0]?.key).toBe('concept/permissions');
       });

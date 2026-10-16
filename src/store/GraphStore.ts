@@ -32,7 +32,7 @@ export interface NodeRecord {
   notUsefulCount: number;
   wrongCount: number;
   lastUsefulAt: string | null;
-  /** Last time someone marked it outdated or wrong. */
+  /** When it was marked outdated or wrong; cleared by the next edit or verify. */
   lastWrongAt: string | null;
 }
 
@@ -103,6 +103,8 @@ export interface SearchQuery {
   prefix?: boolean;
   type?: string;
   tag?: string;
+  /** Only these node ids, e.g. to check which words each hit matched. */
+  ids?: string[];
   limit: number;
 }
 
@@ -170,7 +172,7 @@ export interface GraphStore {
    * is the replacing node's id and only applies to 'superseded'.
    */
   setStatus(id: string, status: NodeStatus, changedBy: string, supersededBy?: string): Promise<NodeRecord>;
-  /** Sets last_verified_at without creating a new version. */
+  /** Sets last_verified_at without creating a new version, and clears last_wrong_at. */
   markVerified(ids: string[], at: string): Promise<void>;
   /** Bumps the verdict's counter; 'useful' also sets last_useful_at, 'outdated_or_wrong' last_wrong_at. */
   recordFeedback(ids: string[], verdict: FeedbackVerdict, at: string): Promise<void>;

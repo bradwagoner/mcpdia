@@ -4,9 +4,6 @@ import { UserError } from './errors.js';
 import type { RenderLevel } from './render.js';
 import { normalizeNodeType, normalizeTag, suggestType } from './vocabulary.js';
 
-/** How far down each word's own results to look when labelling partial hits. */
-const MATCHED_SCAN = 500;
-
 export interface SearchInput {
   query: string;
   type?: string;
@@ -82,8 +79,9 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   // Which words each partial hit matched, one search per word, so the caller can judge relevance.
   const matched = new Map<string, string[]>();
   if (partial) {
+    const ids = result.nodes.map((n) => n.id);
     for (const term of terms) {
-      const { nodes } = await store.search({ ...base, terms: [term], match: 'all', limit: MATCHED_SCAN });
+      const { nodes } = await store.search({ ...base, terms: [term], match: 'all', ids, limit: ids.length });
       for (const n of nodes) matched.set(n.id, [...(matched.get(n.id) ?? []), term]);
     }
   }

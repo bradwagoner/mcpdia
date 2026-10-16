@@ -36,7 +36,6 @@ describe('tool messages', () => {
     const content = result.content as { type: string; text: string }[];
     return content.map((c) => c.text).join('\n');
   }
-  const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 
   it('flags a node marked outdated or wrong until it is edited or verified', async () => {
     await call('feedback', { keys: ['concept/permissions'], verdict: 'outdated_or_wrong' });
@@ -47,13 +46,10 @@ describe('tool messages', () => {
       /\nFlagged outdated or wrong on \d{4}-\d{2}-\d{2}\. Check it before relying on it; fix it with upsert, or verify it if it is still right\.\n/,
     );
 
-    await tick();
     await call('verify', { keys: ['concept/permissions'] });
     expect(await call('get', { keys: ['concept/permissions'] })).not.toContain('Flagged');
 
-    await tick();
     await call('feedback', { keys: ['concept/permissions'], verdict: 'outdated_or_wrong' });
-    await tick();
     await call('upsert', { key: 'concept/permissions', type: 'concept', title: 'Permission system' });
     expect(await call('get', { keys: ['concept/permissions'] })).not.toContain('Flagged');
   });
@@ -93,6 +89,9 @@ describe('tool messages', () => {
       'No node matched all words of "permission roles billing". 2 partial matches; check them before relying on them:\n' +
         '- concept/permissions [concept] Permission system (matched: permission, roles)\n' +
         '- concept/roles [concept] Roles (matched: roles)',
+    );
+    expect(await call('search', { query: 'permission roles billing', level: 'full' })).toContain(
+      '\nMatched: permission, roles\n',
     );
   });
 
