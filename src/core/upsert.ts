@@ -2,8 +2,17 @@ import type { Context } from '../context.js';
 import { VersionConflictError, type GraphStore, type NodePatch, type NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import { cleanKey, displayKey, parseRef, suggestKey, uniqueKey } from './keys.js';
+import { link, linkTarget, type LinkOutput } from './link.js';
 import { findNode, supersededByKey, writableNamespace } from './nodes.js';
-import { normalizeAlias, normalizeNodeType, normalizeTag, STARTER_NODE_TYPES, suggestType } from './vocabulary.js';
+import {
+  normalizeAlias,
+  normalizeEdgeType,
+  normalizeNodeType,
+  normalizeTag,
+  PARENT_EDGE_TYPES,
+  STARTER_NODE_TYPES,
+  suggestType,
+} from './vocabulary.js';
 
 export interface UpsertInput {
   /** Omit to create a new node with a key built from type and title. */
@@ -17,6 +26,8 @@ export interface UpsertInput {
   properties?: Record<string, unknown>;
   /** Apply only if the node is still at this version (optimistic concurrency). */
   version?: number;
+  /** Edges from this node, written in the same call. Only ever added, never replaced. */
+  links?: { type: string; to: string; note?: string }[];
 }
 
 export interface UpsertOutput {
@@ -24,9 +35,43 @@ export interface UpsertOutput {
   created: boolean;
   /** "Did you mean" for a type that is new to this graph. */
   typeHint?: string;
+  links: LinkOutput[];
+  /** Set when a node was created with nothing above it. */
+  parentHint?: string;
 }
 
+/** Writes the node, then its links, the same as calling upsert and then link for each. */
 export async function upsert(ctx: Context, store: GraphStore, input: UpsertInput): Promise<UpsertOutput> {
+  const links = input.links ?? [];
+  // Check the links before writing anything, so a bad one doesn't leave a half-done write.
+  for (const l of links) {
+    if (!normalizeEdgeType(l.type)) throw new UserError('A link type is empty.');
+    if (!l.to.trim()) throw new UserError('A link target is empty.');
+    await linkTarget(ctx, store, l.to);
+  }
+  const out = await writeNode(ctx, store, input);
+  // Link from the saved node's id: a displayed key can read back as a different namespace or as an id.
+  const written: LinkOutput[] = [];
+  for (const l of links)
+    written.push(await link(ctx, store, { from: out.node.id, to: l.to, type: l.type, note: l.note }));
+  const hasParent = written.some((l) => PARENT_EDGE_TYPES.includes(l.edge.type));
+  const parentHint = out.created && !hasParent ? parentHintFor(ctx, out.node) : undefined;
+  return { ...out, links: written, parentHint };
+}
+
+/**
+ * Points out a missing parent. It names no candidate: a guess from recent
+ * writes is often wrong, and the model can search if it needs to.
+ */
+function parentHintFor(ctx: Context, node: NodeRecord): string {
+  const shown = displayKey(ctx, node.namespace, node.key);
+  return `${shown} has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.`;
+}
+
+export type NodeWrite = Omit<UpsertOutput, 'links' | 'parentHint'>;
+
+/** The node part of upsert, without links or hints. Also used by supersede. */
+export async function writeNode(ctx: Context, store: GraphStore, input: UpsertInput): Promise<NodeWrite> {
   const type = normalizeNodeType(input.type);
   if (!type) throw new UserError('type is empty.');
   const title = input.title.trim();

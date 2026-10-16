@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { link } from '../core/link.js';
+import { link, type LinkOutput } from '../core/link.js';
 import type { Deps } from './deps.js';
 import { respond } from './respond.js';
 
@@ -18,13 +18,15 @@ export function registerLink({ server, store, ctx }: Deps): void {
     },
     (input) =>
       respond(async () => {
-        const out = await link(ctx, store, input);
-        const lines = [
-          `${out.created ? 'Linked' : 'Already linked'}: ${out.fromKey} → ${out.edge.type} → ${out.toKey}.`,
-        ];
-        if (out.toMissing) lines.push(`${out.toKey} does not exist yet; the link resolves when it is created.`);
-        if (out.typeHint) lines.push(out.typeHint);
-        return lines.join('\n');
+        return linkLines(await link(ctx, store, input)).join('\n');
       }),
   );
+}
+
+/** How a link reads in a tool result. Shared with upsert's links. */
+export function linkLines(out: LinkOutput): string[] {
+  const lines = [`${out.created ? 'Linked' : 'Already linked'}: ${out.fromKey} → ${out.edge.type} → ${out.toKey}.`];
+  if (out.toMissing) lines.push(`${out.toKey} does not exist yet; the link resolves when it is created.`);
+  if (out.typeHint) lines.push(out.typeHint);
+  return lines;
 }

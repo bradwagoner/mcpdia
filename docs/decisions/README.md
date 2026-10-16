@@ -18,6 +18,7 @@ Short records of the significant design decisions in this project: what we chose
 | 0012 | Readable keys and normalization rules                 | Accepted |
 | 0013 | Benchmark method                                      | Proposed |
 | 0014 | Graph viewer library: Sigma.js or Cytoscape.js | Accepted |
+| 0015 | Links on create, and a hint for nodes with no parent | Accepted |
 
 ## Template
 

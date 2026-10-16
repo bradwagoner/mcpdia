@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { displayKey } from '../core/keys.js';
 import { upsert } from '../core/upsert.js';
 import type { Deps } from './deps.js';
+import { linkLines } from './link.js';
 import { respond } from './respond.js';
 
 export function registerUpsert({ server, store, ctx }: Deps): void {
@@ -9,7 +10,7 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
     'upsert',
     {
       description:
-        "Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node and link related ones.",
+        "Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node; put it under its parent with links.",
       inputSchema: {
         key: z.string().optional().describe('Omit to create; a key is built from type and title.'),
         type: z.string().describe('e.g. concept, how-to, decision, note. Reuse existing types.'),
@@ -20,6 +21,10 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
         aliases: z.array(z.string()).optional().describe('Other names people use for it.'),
         properties: z.record(z.string(), z.unknown()).optional(),
         version: z.number().int().optional().describe('Apply only if the node is still at this version.'),
+        links: z
+          .array(z.object({ type: z.string(), to: z.string(), note: z.string().optional() }))
+          .optional()
+          .describe('Edges from this node, e.g. [{type: "part_of", to: "plan/x"}]. Added, never replaced.'),
       },
     },
     (input) =>
@@ -28,6 +33,8 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
         const key = displayKey(ctx, out.node.namespace, out.node.key);
         const lines = [`${out.created ? 'Created' : 'Updated'} ${key} (v${out.node.version}).`];
         if (out.typeHint) lines.push(out.typeHint);
+        for (const l of out.links) lines.push(...linkLines(l));
+        if (out.parentHint) lines.push(out.parentHint);
         return lines.join('\n');
       }),
   );
