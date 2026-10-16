@@ -191,6 +191,11 @@ export interface GraphStore {
   /** Active edge counts per node id. */
   edgeCounts(nodeIds: string[]): Promise<Map<string, number>>;
 
+  /** Every node in the namespaces, any status, oldest first. Feeds export. */
+  listNodes(namespaces: string[]): Promise<NodeRecord[]>;
+  /** Active edges whose source is in the namespaces, oldest first. Feeds export. */
+  listEdges(namespaces: string[]): Promise<EdgeRecord[]>;
+
   stats(namespaces: string[]): Promise<GraphStats>;
   /** Every stored value for the key across the given namespaces, any scope. */
   getSettings(namespaces: string[], key: string): Promise<SettingRow[]>;

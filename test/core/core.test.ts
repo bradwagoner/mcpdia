@@ -127,6 +127,14 @@ describe('link and get', () => {
     ]);
   });
 
+  it('leaves out neighbors in namespaces the caller cannot read', async () => {
+    await link(ctx, store, { from: 'concept/permissions', to: 'concept/roles', type: 'depends_on' });
+    const both = { ...ctx, namespaces: ['default', 'secret'] };
+    await link(both, store, { from: 'concept/permissions', to: 'secret:concept/plans', type: 'references' });
+    const [item] = await get(ctx, store, { keys: ['concept/permissions'], neighbors: true });
+    expect(item?.node && 'neighbors' in item ? item.neighbors?.map((n) => n.key) : []).toEqual(['concept/roles']);
+  });
+
   it('refuses to link from a missing node', async () => {
     await expect(link(ctx, store, { from: 'concept/nope', to: 'concept/roles', type: 'part_of' })).rejects.toThrow(
       'Not found: concept/nope.',

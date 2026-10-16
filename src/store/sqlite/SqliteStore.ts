@@ -325,6 +325,27 @@ export class SqliteStore implements GraphStore {
     return new Map(rows.map((r) => [r.id, r.count]));
   }
 
+  // Rows made in the same millisecond tie on created_at, and ULIDs are random within a
+  // millisecond, so rowid (insertion order) breaks the tie.
+  async listNodes(namespaces: string[]): Promise<NodeRecord[]> {
+    if (namespaces.length === 0) return [];
+    const rows = this.db
+      .prepare(`SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, rowid`)
+      .all(...namespaces) as NodeRow[];
+    return this.hydrate(rows);
+  }
+
+  async listEdges(namespaces: string[]): Promise<EdgeRecord[]> {
+    if (namespaces.length === 0) return [];
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM edges WHERE status = 'active' AND from_namespace IN (${marks(namespaces)})
+         ORDER BY created_at, rowid`,
+      )
+      .all(...namespaces) as EdgeRow[];
+    return rows.map(toEdge);
+  }
+
   async stats(namespaces: string[]): Promise<GraphStats> {
     if (namespaces.length === 0) return { nodes: 0, nodeTypes: [], edgeTypes: [] };
     const ns = marks(namespaces);
@@ -400,17 +421,19 @@ export class SqliteStore implements GraphStore {
   /** Row → record, loading aliases and tags in one query each. */
   private hydrate(rows: NodeRow[]): NodeRecord[] {
     if (rows.length === 0) return [];
-    const ids = rows.map((r) => r.id);
-    const aliases = groupBy(
-      this.db
-        .prepare(`SELECT node_id, alias AS v FROM node_aliases WHERE node_id IN (${marks(ids)}) ORDER BY alias`)
-        .all(...ids),
+    // One parameter per id, so big lists go in batches under SQLite's variable limit (32,766).
+    const lookup = (sql: (ids: string) => string) => {
+      const found: { node_id: string; v: string }[] = [];
+      for (let i = 0; i < rows.length; i += HYDRATE_BATCH) {
+        const ids = rows.slice(i, i + HYDRATE_BATCH).map((r) => r.id);
+        found.push(...(this.db.prepare(sql(marks(ids))).all(...ids) as { node_id: string; v: string }[]));
+      }
+      return groupBy(found);
+    };
+    const aliases = lookup(
+      (ids) => `SELECT node_id, alias AS v FROM node_aliases WHERE node_id IN (${ids}) ORDER BY alias`,
     );
-    const tags = groupBy(
-      this.db
-        .prepare(`SELECT node_id, tag AS v FROM node_tags WHERE node_id IN (${marks(ids)}) ORDER BY tag`)
-        .all(...ids),
-    );
+    const tags = lookup((ids) => `SELECT node_id, tag AS v FROM node_tags WHERE node_id IN (${ids}) ORDER BY tag`);
     return rows.map((r) => ({
       id: r.id,
       namespace: r.namespace,
@@ -496,6 +519,9 @@ function toEdge(r: EdgeRow): EdgeRecord {
     updatedAt: r.updated_at,
   };
 }
+
+// Ids per lookup in hydrate(), well under SQLite's 32,766 variable limit.
+const HYDRATE_BATCH = 10_000;
 
 function marks(values: unknown[]): string {
   return values.map(() => '?').join(', ');

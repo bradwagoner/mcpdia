@@ -9,6 +9,29 @@ import { graphStoreSuite } from './graphstore.suite.js';
 
 graphStoreSuite('sqlite', async () => new SqliteStore(':memory:'));
 
+describe('SqliteStore', () => {
+  it('lists more nodes than SQLite binds in one statement', async () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'mcpedia-big-')), 'graph.db');
+    await new SqliteStore(path).close();
+    const db = new Database(path);
+    const insert = db.prepare(
+      `INSERT INTO nodes (id, key, type, title, created_at, updated_at) VALUES (?, ?, 'note', ?, '2026-01-01', '2026-01-01')`,
+    );
+    const count = 33_000;
+    db.transaction(() => {
+      for (let i = 0; i < count; i++) insert.run(`id${i}`, `note/${i}`, `Note ${i}`);
+      db.prepare(`INSERT INTO node_tags (node_id, tag) VALUES ('id32999', 'last')`).run();
+    })();
+    db.close();
+
+    const store = new SqliteStore(path);
+    const nodes = await store.listNodes(['default']);
+    expect(nodes).toHaveLength(count);
+    expect(nodes.at(-1)).toMatchObject({ key: 'note/32999', tags: ['last'] });
+    await store.close();
+  });
+});
+
 describe('migrate', () => {
   it('applies each numbered file once, in order', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mcpedia-migrations-'));
