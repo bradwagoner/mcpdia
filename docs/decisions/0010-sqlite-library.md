@@ -24,6 +24,6 @@ What was checked on 2026-10-07:
 - **libsql:** in maintenance mode, and adds a remote-database feature we do not need.
 
 ## Consequences
-- One native dependency. Prebuilt binaries cover the common platforms, so users need no build tools.
+- One native dependency. Prebuilt binaries cover the common platforms, so users need no build tools. better-sqlite3 13 ships them inside the npm package (win32, darwin, linux and linuxmusl, each x64 and arm64) with no install script, so `npm install` never invokes node-gyp. Checked 2026-10-13 on Windows 11 with no Visual Studio: a packed MCPedia installed and answered `orient` over stdio.
 - The SQLite version comes from the library, not the user's Node, so FTS5 behaves the same everywhere.
 - Requires Node 22 or later.
