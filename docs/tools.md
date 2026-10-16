@@ -69,7 +69,7 @@ Links:
 Not found: `Not found: concept/permision. Did you mean concept/permissions?`
 
 ## upsert
-"Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node and link related ones."
+"Create a node, or edit a node's own facts by key. Search first to avoid duplicates. Keep one thing per node; put it under its parent with links."
 
 | Input | Type | Notes |
 |---|---|---|
@@ -79,8 +79,9 @@ Not found: `Not found: concept/permision. Did you mean concept/permissions?`
 | `tags`, `aliases` | list of strings | Replace the current lists when passed. |
 | `properties` | object | Replaces the current properties when passed. |
 | `version` | integer | Apply only if the node is still at this version. |
+| `links` | list of `{type, to, note?}` | Edges from this node, written in the same call, like `link`. Added, never replaced. |
 
-Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did you mean" line when the type is new and close to an existing one.
+Returns `Created concept/permissions (v1).` or `Updated ... (v2).`, plus a "did you mean" line when the type is new and close to an existing one, and a line per link. A new node with no parent link gets one more line saying so (ADR 0015).
 
 ## link
 "Link two nodes with a typed edge, e.g. depends_on, part_of, references, related_to. The target may not exist yet."

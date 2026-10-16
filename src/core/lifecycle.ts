@@ -3,7 +3,7 @@ import type { FeedbackVerdict, GraphStore, NodeRecord } from '../store/GraphStor
 import { UserError } from './errors.js';
 import { cleanKey, displayKey, parseRef, suggestKey, uniqueKey } from './keys.js';
 import { findNode, requireActive, supersededByKey } from './nodes.js';
-import { upsert, type UpsertOutput } from './upsert.js';
+import { writeNode, type NodeWrite } from './upsert.js';
 import { normalizeNodeType } from './vocabulary.js';
 
 /** Calls that touch several nodes take a short list, like `get`. */
@@ -46,7 +46,7 @@ export async function supersede(ctx: Context, store: GraphStore, input: Supersed
     (v) => v !== undefined,
   );
 
-  let result: UpsertOutput;
+  let result: NodeWrite;
   const existing = input.new ? await findNode(ctx, store, parseRef(ctx, cleanKey(input.new))) : null;
   if (existing?.id === old.id) throw new UserError('A node cannot supersede itself.');
   if (existing && !hasContent) {
@@ -60,7 +60,7 @@ export async function supersede(ctx: Context, store: GraphStore, input: Supersed
       input.new ??
       (await uniqueKey(suggestKey(type, title), async (k) => (await store.getNode(ctx.writeNamespace, k)) !== null));
     const { summary, body, tags, aliases } = input;
-    result = await upsert(ctx, store, { key, type, title, summary, body, tags, aliases });
+    result = await writeNode(ctx, store, { key, type, title, summary, body, tags, aliases });
   }
 
   const replacement = result.node;

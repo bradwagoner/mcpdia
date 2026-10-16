@@ -22,6 +22,17 @@ export interface LinkOutput {
   typeHint?: string;
 }
 
+/** Where a link points. The target may not exist yet: edges are late-bound, so store its namespace and key. */
+export async function linkTarget(ctx: Context, store: GraphStore, ref: string) {
+  const toRef = parseRef(ctx, ref);
+  const toNode = await findNode(ctx, store, toRef);
+  let to: { namespace: string; key: string };
+  if (toNode) to = { namespace: toNode.namespace, key: toNode.key };
+  else if (toRef.kind === 'key') to = { namespace: writableNamespace(ctx, toRef), key: toRef.key };
+  else throw new UserError(`Not found: ${toRef.id}.`, 'Link to a key instead; it can be created later.');
+  return { to, toNode };
+}
+
 export async function link(ctx: Context, store: GraphStore, input: LinkInput): Promise<LinkOutput> {
   const type = normalizeEdgeType(input.type);
   if (!type) throw new UserError('type is empty.');
@@ -31,13 +42,7 @@ export async function link(ctx: Context, store: GraphStore, input: LinkInput): P
     throw new UserError(`Not found: ${input.from}.`, 'Create it with upsert first, or search for its key.');
   }
 
-  // The target may not exist yet: edges are late-bound, so store its namespace and key.
-  const toRef = parseRef(ctx, input.to);
-  const toNode = await findNode(ctx, store, toRef);
-  let to: { namespace: string; key: string };
-  if (toNode) to = { namespace: toNode.namespace, key: toNode.key };
-  else if (toRef.kind === 'key') to = { namespace: writableNamespace(ctx, toRef), key: toRef.key };
-  else throw new UserError(`Not found: ${toRef.id}.`, 'Link to a key instead; it can be created later.');
+  const { to, toNode } = await linkTarget(ctx, store, input.to);
 
   const used = (await store.stats(ctx.namespaces)).edgeTypes.map((t) => t.name);
   const near = used.includes(type) ? null : suggestType(type, [...new Set([...used, ...STARTER_EDGE_TYPES])]);

@@ -9,6 +9,9 @@
 export const STARTER_NODE_TYPES = ['concept', 'note', 'decision', 'how-to'];
 export const STARTER_EDGE_TYPES = ['related_to', 'part_of', 'depends_on', 'supersedes', 'example_of', 'references'];
 
+/** Edges that put a node under another one: its parents. */
+export const PARENT_EDGE_TYPES = ['part_of', 'comments_on', 'candidate_for'];
+
 export function normalizeNodeType(value: string): string {
   return normalizeWith(value, '-');
 }

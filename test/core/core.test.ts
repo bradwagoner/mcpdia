@@ -73,6 +73,76 @@ describe('upsert', () => {
   });
 });
 
+describe('upsert links and the parent hint', () => {
+  const task = (title: string, links?: { type: string; to: string }[]) =>
+    upsert(ctx, store, { type: 'task', title, links });
+  const parents = async (key: string) => {
+    const node = await store.getNode('default', key);
+    return (await store.neighbors(node!.id)).map((n) => `${n.edge.type} ${n.otherKey}`).sort();
+  };
+
+  it('writes links with the node, including to a node that does not exist yet', async () => {
+    const out = await task('Ship it', [
+      { type: 'Part Of', to: 'plan/launch' },
+      { type: 'depends_on', to: 'task/missing' },
+    ]);
+    expect(out.links.map((l) => [l.edge.type, l.toKey, l.toMissing])).toEqual([
+      ['part_of', 'plan/launch', true],
+      ['depends_on', 'task/missing', true],
+    ]);
+    expect(await parents('task/ship-it')).toEqual(['depends_on task/missing', 'part_of plan/launch']);
+    expect(out.parentHint).toBeUndefined();
+  });
+
+  it('links from the saved node even when its key looks like a namespace', async () => {
+    const out = await upsert(ctx, store, {
+      type: 'schema:Person',
+      title: 'Ada',
+      links: [{ type: 'part_of', to: 'plan/launch' }],
+    });
+    expect(out.links[0]?.edge.fromKey).toBe(out.node.key);
+    expect(out.links[0]?.edge.fromNamespace).toBe(out.node.namespace);
+  });
+
+  it('adds links on update and keeps the ones already there', async () => {
+    await task('Ship it', [{ type: 'part_of', to: 'plan/launch' }]);
+    await upsert(ctx, store, {
+      key: 'task/ship-it',
+      type: 'task',
+      title: 'Ship it',
+      links: [{ type: 'references', to: 'note/x' }],
+    });
+    expect(await parents('task/ship-it')).toEqual(['part_of plan/launch', 'references note/x']);
+  });
+
+  it('checks every link before writing anything', async () => {
+    await expect(task('Ship it', [{ type: ' ', to: 'plan/launch' }])).rejects.toThrow('A link type is empty.');
+    await expect(task('Ship it', [{ type: 'part_of', to: '01JZZZZZZZZZZZZZZZZZZZZZZZ' }])).rejects.toThrow('Not found');
+    expect(await store.getNode('default', 'task/ship-it')).toBeNull();
+  });
+
+  it('says when a node is created with no parent', async () => {
+    const out = await task('Loose end');
+    expect(out.parentHint).toBe(
+      'task/loose-end has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.',
+    );
+  });
+
+  it('names no candidate parent, even when recent writes share one', async () => {
+    await task('One', [{ type: 'part_of', to: 'plan/launch' }]);
+    await task('Two', [{ type: 'part_of', to: 'plan/launch' }]);
+    expect((await task('Three')).parentHint).not.toContain('plan/launch');
+  });
+
+  it('covers every type, and leaves updates alone', async () => {
+    expect((await upsert(ctx, store, perms)).parentHint).toContain('has no parent.');
+    await task('Loose end');
+    expect(
+      (await upsert(ctx, store, { key: 'task/loose-end', type: 'task', title: 'Loose end' })).parentHint,
+    ).toBeUndefined();
+  });
+});
+
 describe('search', () => {
   it('falls back to any-word matching when all words find nothing', async () => {
     await upsert(ctx, store, perms);
