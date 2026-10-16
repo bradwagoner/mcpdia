@@ -63,6 +63,7 @@ This file does two jobs: it states what each release will and will not include, 
 Newest first. Each entry: what shipped, what changed from the plan, what we learned.
 
 ### Unreleased
+- Links on create (2026-10-15, #30): `upsert` takes `links` and writes the node's edges in the same call, and its result points out a new node with no parent (ADR 0015).
 - Repo cleanup (2026-10-13): removed the planning handoff document (its decisions live in the ADRs), untracked IntelliJ project files, and relabelled the README feature list so planned work is marked as planned.
 - JSONL export (2026-10-13, KAN-6): `mcpedia export [--namespace ns]... [--all-status] [--out file]` writes a header, the active nodes (every status with `--all-status`), then the active edges. Format in `docs/schema.md`. Version history is not exported.
 - Benchmark harness, first cut (2026-10-12): demo dataset (Kestrel, a fictional invoicing app: 82 nodes, 7 markdown topic files, 40 questions) in `bench/dataset/`, shared with demos through `npm run demo:seed`; scripted strategies and token counting per ADR 0013 (proposed); `npm run bench`. First estimate: MCPedia's retrieval is far cheaper per question, but its fixed session cost (mostly tool definitions, about 1,600 tokens) cancels the saving against well-split topic files at this corpus size. No headline published yet.

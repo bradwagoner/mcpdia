@@ -53,6 +53,20 @@ describe('MCP server', () => {
     for (const tool of tools) expect(tool.description?.length, tool.name).toBeLessThanOrEqual(160);
   });
 
+  it('writes links with upsert and points out a missing parent', async () => {
+    expect(
+      (await call('upsert', { type: 'task', title: 'Ship it', links: [{ type: 'part_of', to: 'plan/launch' }] })).text,
+    ).toBe(
+      'Created task/ship-it (v1).\n' +
+        'Linked: task/ship-it → part_of → plan/launch.\n' +
+        'plan/launch does not exist yet; the link resolves when it is created.',
+    );
+    expect((await call('upsert', { type: 'task', title: 'Loose end' })).text).toBe(
+      'Created task/loose-end (v1).\n' +
+        'task/loose-end has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.',
+    );
+  });
+
   it('runs the note, feedback and lifecycle tools', async () => {
     await call('upsert', { key: 'concept/permissions', type: 'concept', title: 'Permission system' });
     expect((await call('annotate', { on: 'concept/permissions', text: 'Permissions cache is 5 min' })).text).toBe(
@@ -97,7 +111,10 @@ describe('MCP server', () => {
           tags: ['auth'],
         })
       ).text,
-    ).toBe('Created concept/permissions (v1).');
+    ).toBe(
+      'Created concept/permissions (v1).\n' +
+        'concept/permissions has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.',
+    );
     await call('upsert', { key: 'concept/roles', type: 'concept', title: 'Roles' });
     expect((await call('link', { from: 'concept/permissions', to: 'concept/roles', type: 'depends_on' })).text).toBe(
       'Linked: concept/permissions → depends_on → concept/roles.',
