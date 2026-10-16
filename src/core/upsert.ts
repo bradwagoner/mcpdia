@@ -50,9 +50,10 @@ export async function upsert(ctx: Context, store: GraphStore, input: UpsertInput
     await linkTarget(ctx, store, l.to);
   }
   const out = await writeNode(ctx, store, input);
-  const from = displayKey(ctx, out.node.namespace, out.node.key);
+  // Link from the saved node's id: a displayed key can read back as a different namespace or as an id.
   const written: LinkOutput[] = [];
-  for (const l of links) written.push(await link(ctx, store, { from, to: l.to, type: l.type, note: l.note }));
+  for (const l of links)
+    written.push(await link(ctx, store, { from: out.node.id, to: l.to, type: l.type, note: l.note }));
   const hasParent = written.some((l) => PARENT_EDGE_TYPES.includes(l.edge.type));
   const parentHint = out.created && !hasParent ? parentHintFor(ctx, out.node) : undefined;
   return { ...out, links: written, parentHint };

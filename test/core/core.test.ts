@@ -94,6 +94,16 @@ describe('upsert links and the parent hint', () => {
     expect(out.parentHint).toBeUndefined();
   });
 
+  it('links from the saved node even when its key looks like a namespace', async () => {
+    const out = await upsert(ctx, store, {
+      type: 'schema:Person',
+      title: 'Ada',
+      links: [{ type: 'part_of', to: 'plan/launch' }],
+    });
+    expect(out.links[0]?.edge.fromKey).toBe(out.node.key);
+    expect(out.links[0]?.edge.fromNamespace).toBe(out.node.namespace);
+  });
+
   it('adds links on update and keeps the ones already there', async () => {
     await task('Ship it', [{ type: 'part_of', to: 'plan/launch' }]);
     await upsert(ctx, store, {
