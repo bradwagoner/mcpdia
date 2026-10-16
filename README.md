@@ -41,6 +41,10 @@ The tools are `orient`, `search`, `get`, `upsert`, `annotate`, `link`, `supersed
 
 Export the graph as JSON Lines with `node dist/index.js export --out graph.jsonl`. It writes active nodes and their links; add `--namespace ns` to pick namespaces, or `--all-status` to include superseded and deleted nodes. The format is in [`docs/schema.md`](docs/schema.md#jsonl-export-format).
 
+## Security
+
+MCPedia feeds stored text back to LLMs, so treat what it returns as data, not instructions: a node can inform an agent, never authorize it. Today it runs locally over stdio against a SQLite file on your machine, with no network port and no auth; team mode adds token auth and per-namespace permissions. Details in [SECURITY.md](SECURITY.md).
+
 ## Design
 
 The reasoning behind each choice is written down:
