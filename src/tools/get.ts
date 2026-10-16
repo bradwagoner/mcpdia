@@ -27,7 +27,8 @@ export function registerGet({ server, store, ctx }: Deps): void {
 
 function renderItem(ctx: Context, item: GetItem, level: RenderLevel, neighborLevel: RenderLevel): string {
   if (!item.node) {
-    return `Not found: ${item.ref}.${item.suggestion ? ` Did you mean ${item.suggestion}?` : ''}`;
+    const what = item.deleted ? `${item.ref} was deleted.` : `Not found: ${item.ref}.`;
+    return `${what}${item.suggestion ? ` Did you mean ${item.suggestion}?` : ''}`;
   }
   const lines = [renderStub(ctx, item.node, level, { supersededByKey: item.supersededByKey })];
   if (item.neighbors?.length) {

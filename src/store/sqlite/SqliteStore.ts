@@ -98,7 +98,7 @@ export class SqliteStore implements GraphStore {
       this.db
         .prepare(
           `UPDATE nodes SET type = ?, title = ?, summary = ?, body = ?, properties = ?,
-                  version = version + 1, updated_by = ?, updated_at = ?
+                  version = version + 1, updated_by = ?, updated_at = ?, last_wrong_at = NULL
             WHERE id = ?`,
         )
         .run(
@@ -138,7 +138,9 @@ export class SqliteStore implements GraphStore {
 
   async markVerified(ids: string[], at: string): Promise<void> {
     if (ids.length === 0) return;
-    this.db.prepare(`UPDATE nodes SET last_verified_at = ? WHERE id IN (${marks(ids)})`).run(at, ...ids);
+    this.db
+      .prepare(`UPDATE nodes SET last_verified_at = ?, last_wrong_at = NULL WHERE id IN (${marks(ids)})`)
+      .run(at, ...ids);
   }
 
   async recordFeedback(ids: string[], verdict: FeedbackVerdict, at: string): Promise<void> {
@@ -146,9 +148,9 @@ export class SqliteStore implements GraphStore {
     const set = {
       useful: 'useful_count = useful_count + 1, last_useful_at = ?',
       not_useful: 'not_useful_count = not_useful_count + 1',
-      outdated_or_wrong: 'wrong_count = wrong_count + 1',
+      outdated_or_wrong: 'wrong_count = wrong_count + 1, last_wrong_at = ?',
     }[verdict];
-    const params = verdict === 'useful' ? [at, ...ids] : ids;
+    const params = verdict === 'not_useful' ? ids : [at, ...ids];
     this.db.prepare(`UPDATE nodes SET ${set} WHERE id IN (${marks(ids)})`).run(...params);
   }
 
@@ -222,6 +224,10 @@ export class SqliteStore implements GraphStore {
     if (q.type) {
       where.push('n.type = ?');
       params.push(q.type);
+    }
+    if (q.ids) {
+      where.push(`n.id IN (${marks(q.ids)})`);
+      params.push(...q.ids);
     }
     if (q.tag) {
       where.push('EXISTS (SELECT 1 FROM node_tags t WHERE t.node_id = n.id AND t.tag = ?)');
@@ -458,6 +464,7 @@ export class SqliteStore implements GraphStore {
       notUsefulCount: r.not_useful_count,
       wrongCount: r.wrong_count,
       lastUsefulAt: r.last_useful_at,
+      lastWrongAt: r.last_wrong_at,
     }));
   }
 }
@@ -484,6 +491,7 @@ interface NodeRow {
   not_useful_count: number;
   wrong_count: number;
   last_useful_at: string | null;
+  last_wrong_at: string | null;
 }
 
 interface EdgeRow {

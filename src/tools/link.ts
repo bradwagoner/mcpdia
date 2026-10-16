@@ -28,5 +28,6 @@ export function linkLines(out: LinkOutput): string[] {
   const lines = [`${out.created ? 'Linked' : 'Already linked'}: ${out.fromKey} → ${out.edge.type} → ${out.toKey}.`];
   if (out.toMissing) lines.push(`${out.toKey} does not exist yet; the link resolves when it is created.`);
   if (out.typeHint) lines.push(out.typeHint);
+  if (out.targetHint) lines.push(out.targetHint);
   return lines;
 }

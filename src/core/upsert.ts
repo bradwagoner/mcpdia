@@ -38,6 +38,10 @@ export interface UpsertOutput {
   links: LinkOutput[];
   /** Set when a node was created with nothing above it. */
   parentHint?: string;
+  /** Set when a node was created without a summary, which is what search shows. */
+  summaryHint?: string;
+  /** Property names an update dropped, since passing properties replaces them all. */
+  removedProperties?: string[];
 }
 
 /** Writes the node, then its links, the same as calling upsert and then link for each. */
@@ -56,7 +60,11 @@ export async function upsert(ctx: Context, store: GraphStore, input: UpsertInput
     written.push(await link(ctx, store, { from: out.node.id, to: l.to, type: l.type, note: l.note }));
   const hasParent = written.some((l) => PARENT_EDGE_TYPES.includes(l.edge.type));
   const parentHint = out.created && !hasParent ? parentHintFor(ctx, out.node) : undefined;
-  return { ...out, links: written, parentHint };
+  const summaryHint =
+    out.created && !out.node.summary
+      ? 'No summary: search shows only the title, so add a one-line summary if you can.'
+      : undefined;
+  return { ...out, links: written, parentHint, summaryHint };
 }
 
 /**
@@ -68,7 +76,7 @@ function parentHintFor(ctx: Context, node: NodeRecord): string {
   return `${shown} has no parent. Most nodes sit under something, so this is probably not right; link it with part_of unless it starts something new.`;
 }
 
-export type NodeWrite = Omit<UpsertOutput, 'links' | 'parentHint'>;
+export type NodeWrite = Omit<UpsertOutput, 'links' | 'parentHint' | 'summaryHint'>;
 
 /** The node part of upsert, without links or hints. Also used by supersede. */
 export async function writeNode(ctx: Context, store: GraphStore, input: UpsertInput): Promise<NodeWrite> {
@@ -91,7 +99,13 @@ export async function writeNode(ctx: Context, store: GraphStore, input: UpsertIn
   if (input.key !== undefined) {
     const ref = parseRef(ctx, cleanKey(input.key));
     const existing = await findNode(ctx, store, ref);
-    if (existing) return { node: await update(ctx, store, existing, input, fields), created: false, typeHint };
+    if (existing) {
+      const node = await update(ctx, store, existing, input, fields);
+      const removed = input.properties
+        ? Object.keys(existing.properties).filter((k) => !Object.hasOwn(fields.properties, k))
+        : [];
+      return { node, created: false, typeHint, removedProperties: removed.length ? removed : undefined };
+    }
     if (ref.kind === 'id') throw new UserError(`Not found: ${ref.id}.`, 'Pass a key to create a node.');
     const namespace = writableNamespace(ctx, ref);
     if (!ref.key) throw new UserError('key is empty.');

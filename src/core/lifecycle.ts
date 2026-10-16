@@ -2,7 +2,8 @@ import type { Context } from '../context.js';
 import type { FeedbackVerdict, GraphStore, NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import { cleanKey, displayKey, parseRef, suggestKey, uniqueKey } from './keys.js';
-import { findNode, requireActive } from './nodes.js';
+import { COMMENTS_ON } from './annotate.js';
+import { findNode, requireActive, supersededByKey } from './nodes.js';
 import { writeNode, type NodeWrite } from './upsert.js';
 import { normalizeNodeType } from './vocabulary.js';
 
@@ -92,6 +93,10 @@ export async function supersede(ctx: Context, store: GraphStore, input: Supersed
 export interface BatchOutput {
   done: string[];
   notFound: string[];
+  /** Superseded keys the operation skipped, each with its replacement. */
+  superseded: string[];
+  /** Keys of nodes that were already deleted. */
+  deleted: string[];
 }
 
 /** "I checked and it is still right": bumps last_verified_at. */
@@ -104,11 +109,26 @@ export async function verify(ctx: Context, store: GraphStore, keys: string[]): P
   return out;
 }
 
+export interface DeleteOutput extends BatchOutput {
+  /** Live nodes that still link to a deleted one: those links now lead nowhere. */
+  dangling: { key: string; from: string[] }[];
+}
+
 /** Soft delete only: the node and its history stay in the store. */
-export async function softDelete(ctx: Context, store: GraphStore, keys: string[]): Promise<BatchOutput> {
+export async function softDelete(ctx: Context, store: GraphStore, keys: string[]): Promise<DeleteOutput> {
   const { nodes, out } = await resolveBatch(ctx, store, keys);
-  for (const node of nodes) await store.setStatus(node.id, 'deleted', ctx.caller);
-  return out;
+  const dangling: DeleteOutput['dangling'] = [];
+  const gone = new Set(nodes.map((n) => n.id));
+  for (const node of nodes) {
+    await store.setStatus(node.id, 'deleted', ctx.caller);
+    const from = (await store.neighbors(node.id))
+      // Notes go with the node they comment on, so they don't count as dangling.
+      .filter((n) => n.direction === 'in' && n.edge.type !== COMMENTS_ON && n.other && !gone.has(n.other.id))
+      .filter((n) => ctx.namespaces.includes(n.otherNamespace))
+      .map((n) => `${displayKey(ctx, n.otherNamespace, n.otherKey)} (${n.edge.type})`);
+    if (from.length) dangling.push({ key: displayKey(ctx, node.namespace, node.key), from });
+  }
+  return { ...out, dangling };
 }
 
 export async function feedback(
@@ -117,7 +137,8 @@ export async function feedback(
   keys: string[],
   verdict: FeedbackVerdict,
 ): Promise<BatchOutput> {
-  const { nodes, out } = await resolveBatch(ctx, store, keys);
+  // Superseded nodes still show up in get, so they can still be marked outdated.
+  const { nodes, out } = await resolveBatch(ctx, store, keys, true);
   await store.recordFeedback(
     nodes.map((n) => n.id),
     verdict,
@@ -126,18 +147,28 @@ export async function feedback(
   return out;
 }
 
-/** Active nodes for a list of keys; unknown keys are reported, not fatal. */
-async function resolveBatch(ctx: Context, store: GraphStore, keys: string[]) {
+/**
+ * Active nodes (plus superseded ones when allowed) for a list of keys. Unknown
+ * keys are reported, not fatal; a superseded key names its replacement.
+ */
+async function resolveBatch(ctx: Context, store: GraphStore, keys: string[], allowSuperseded = false) {
   if (keys.length === 0) throw new UserError('Pass at least one key.');
   if (keys.length > MAX_BATCH) throw new UserError(`Too many keys: ${keys.length}. Up to ${MAX_BATCH} per call.`);
   const nodes: NodeRecord[] = [];
-  const out: BatchOutput = { done: [], notFound: [] };
+  const out: BatchOutput = { done: [], notFound: [], superseded: [], deleted: [] };
   for (const key of keys) {
     const node = await findNode(ctx, store, parseRef(ctx, key));
-    if (node?.status === 'active' && !nodes.some((n) => n.id === node.id)) {
+    const usable = node?.status === 'active' || (allowSuperseded && node?.status === 'superseded');
+    if (node && usable) {
+      if (nodes.some((n) => n.id === node.id)) continue;
       nodes.push(node);
       out.done.push(displayKey(ctx, node.namespace, node.key));
-    } else if (node?.status !== 'active') {
+    } else if (node?.status === 'superseded') {
+      const by = await supersededByKey(ctx, store, node);
+      out.superseded.push(by ? `${key} (now ${by})` : key);
+    } else if (node?.status === 'deleted') {
+      out.deleted.push(key);
+    } else {
       out.notFound.push(key);
     }
   }

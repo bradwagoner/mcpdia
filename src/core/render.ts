@@ -16,6 +16,16 @@ export interface RenderExtras {
   edgeCount?: number;
   /** Display key of the replacing node, for superseded nodes. */
   supersededByKey?: string;
+  /** Query words a partial search hit matched. */
+  matched?: string[];
+}
+
+/**
+ * Someone marked the node outdated or wrong, and nobody has edited or verified it since.
+ * An edit or a verify clears the warning; the count stays on record.
+ */
+export function flaggedWrong(node: NodeRecord): boolean {
+  return node.lastWrongAt !== null;
 }
 
 /** `concept/permissions [concept] Permission system` */
@@ -29,7 +39,11 @@ export function titleLine(ctx: Context, node: NodeRecord): string {
  */
 export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, extras: RenderExtras = {}): string {
   if (level === 'full') return renderFull(ctx, node, extras);
-  const lines = [titleLine(ctx, node)];
+  const markers: string[] = [];
+  if (extras.supersededByKey) markers.push(`superseded by ${extras.supersededByKey}`);
+  if (flaggedWrong(node)) markers.push('flagged outdated or wrong');
+  if (extras.matched?.length) markers.push(`matched: ${extras.matched.join(', ')}`);
+  const lines = [titleLine(ctx, node) + (markers.length ? ` (${markers.join('; ')})` : '')];
   if (level === 'summary' || level === 'snippet') lines.push(`  ${summaryLine(node, extras)}`);
   if (level === 'snippet' && node.body) lines.push(`  ${snippet(node.body)}`);
   return lines.join('\n');
@@ -49,6 +63,12 @@ export function renderFull(ctx: Context, node: NodeRecord, extras: RenderExtras 
   if (node.lastVerifiedAt) meta.push(`verified ${day(node.lastVerifiedAt)}`);
   const lines = [`${titleLine(ctx, node)}   ${meta.join(' · ')}`];
   if (extras.supersededByKey) lines.push(`Superseded by ${extras.supersededByKey}`);
+  if (flaggedWrong(node)) {
+    lines.push(
+      `Flagged outdated or wrong on ${day(node.lastWrongAt!)}. Check it before relying on it; fix it with upsert, or verify it if it is still right.`,
+    );
+  }
+  if (extras.matched?.length) lines.push(`Matched: ${extras.matched.join(', ')}`);
   if (node.summary) lines.push(node.summary);
 
   const labels: string[] = [];

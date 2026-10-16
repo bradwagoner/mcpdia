@@ -20,6 +20,7 @@ export async function requireActive(ctx: Context, store: GraphStore, input: stri
       next ? `Use ${next} instead.` : undefined,
     );
   }
+  if (node?.status === 'deleted') throw new UserError(`${input} was deleted.`, 'search for a current node.');
   throw new UserError(`Not found: ${input}.`, 'search for its key.');
 }
 

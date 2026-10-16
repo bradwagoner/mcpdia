@@ -16,6 +16,10 @@ export function registerListTypes({ server, store, ctx }: Deps): void {
         const lines = [`Node types: ${counts(out.nodeTypes)}`, `Edge types: ${counts(out.edgeTypes)}`];
         const unused = [...out.unusedNodeStarters, ...out.unusedEdgeStarters];
         if (unused.length) lines.push(`Also available: ${unused.join(', ')}`);
+        if (out.lookalikes.length) {
+          const shown = out.lookalikes.map(([a, b]) => `${a} and ${b}`).join('; ');
+          lines.push(`Look alike: ${shown}. Pick one and reuse it.`);
+        }
         return lines.join('\n');
       }),
   );

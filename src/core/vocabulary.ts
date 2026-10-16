@@ -37,6 +37,11 @@ function normalizeWith(value: string, separator: '-' | '_'): string {
     .replace(new RegExp(`^\\${separator}+|\\${separator}+$`, 'g'), '');
 }
 
+/** A type without separators or a trailing s, so how-to, howto and how_tos compare equal. */
+export function squashType(name: string): string {
+  return name.replace(/[-_]/g, '').replace(/s$/, '');
+}
+
 /**
  * When `type` is new, the closest existing (or starter) type that looks like
  * the same idea: equal after dropping separators and a plural "s", or within
@@ -44,10 +49,9 @@ function normalizeWith(value: string, separator: '-' | '_'): string {
  */
 export function suggestType(type: string, existing: string[]): string | null {
   if (existing.includes(type)) return null;
-  const squash = (s: string) => s.replace(/[-_]/g, '').replace(/s$/, '');
   let best: { name: string; distance: number } | null = null;
   for (const name of existing) {
-    const distance = squash(name) === squash(type) ? 0 : editDistance(name, type);
+    const distance = squashType(name) === squashType(type) ? 0 : editDistance(name, type);
     if (distance <= 2 && (best === null || distance < best.distance)) best = { name, distance };
   }
   return best?.name ?? null;

@@ -33,8 +33,14 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
         const key = displayKey(ctx, out.node.namespace, out.node.key);
         const lines = [`${out.created ? 'Created' : 'Updated'} ${key} (v${out.node.version}).`];
         if (out.typeHint) lines.push(out.typeHint);
+        if (out.removedProperties) {
+          lines.push(
+            `Properties replaced; dropped ${out.removedProperties.join(', ')}. Pass every property you want to keep.`,
+          );
+        }
         for (const l of out.links) lines.push(...linkLines(l));
         if (out.parentHint) lines.push(out.parentHint);
+        if (out.summaryHint) lines.push(out.summaryHint);
         return lines.join('\n');
       }),
   );
