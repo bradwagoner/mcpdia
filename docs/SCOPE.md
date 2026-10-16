@@ -63,6 +63,7 @@ This file does two jobs: it states what each release will and will not include, 
 Newest first. Each entry: what shipped, what changed from the plan, what we learned.
 
 ### Unreleased
+- Install check (2026-10-16, #5): confirmed `npm install` needs no build tools on Windows, since better-sqlite3 ships prebuilt binaries in the package (ADR 0010). A test fails if an upgrade brings node-gyp back.
 - No guesses (2026-10-16): tools no longer answer with "did you mean". A new type, an unknown type filter or a missing key is stated as a fact with where to look (ADR 0018).
 - Deleted nodes (2026-10-16, #31): `get` and `search` take `all_status` to read deleted and superseded nodes, and `upsert` on a deleted key restores the node instead of refusing (ADR 0017).
 - Tool messages (2026-10-16, #10, #11): results now say what the server knows: partial search matches with the words they matched, nodes flagged outdated or wrong, deleted and superseded keys, dangling links after a delete, parent loops, dropped properties and missing summaries (ADR 0016). Question words like "what is" are dropped from queries. Migration 002 adds `last_wrong_at`.
