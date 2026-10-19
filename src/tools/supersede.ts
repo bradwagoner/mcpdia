@@ -11,7 +11,7 @@ export function registerSupersede({ server, store, ctx }: Deps): void {
       description:
         'Replace an outdated node with a new one. Moves its links to the replacement and keeps the old one as history.',
       inputSchema: {
-        old: z.string().describe('Key of the node being replaced.'),
+        old: z.string(),
         new: z
           .string()
           .optional()

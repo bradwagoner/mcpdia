@@ -20,7 +20,7 @@ export function registerUpsert({ server, store, ctx }: Deps): void {
         tags: z.array(z.string()).optional(),
         aliases: z.array(z.string()).optional().describe('Other names people use for it.'),
         properties: z.record(z.string(), z.unknown()).optional(),
-        version: z.number().int().optional().describe('Apply only if the node is still at this version.'),
+        version: z.number().optional().describe('Apply only if the node is still at this version.'),
         links: z
           .array(z.object({ type: z.string(), to: z.string(), note: z.string().optional() }))
           .optional()
