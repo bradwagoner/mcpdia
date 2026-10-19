@@ -7,7 +7,7 @@ Short records of the significant design decisions in this project: what we chose
 | 0001 | TypeScript and a three-layer architecture             | Accepted |
 | 0002 | Free-form types with soft guardrails                  | Accepted, amended by 0018 |
 | 0003 | Stable keys, namespaces, and portable packs           | Accepted |
-| 0004 | Render levels and a lean, configurable `orient`       | Accepted |
+| 0004 | Render levels and a lean, configurable `orient`       | Accepted, amended by 0020 |
 | 0005 | Usefulness feedback as a separate tool                | Accepted |
 | 0006 | One codebase, user-chosen deployment mode             | Accepted |
 | 0007 | Late-bound edges and ghost nodes                      | Accepted |
@@ -22,6 +22,7 @@ Short records of the significant design decisions in this project: what we chose
 | 0016 | Tools say what happened                               | Accepted |
 | 0017 | Read and restore deleted nodes                        | Accepted |
 | 0018 | State facts, don't guess                              | Accepted |
+| 0020 | Snippets show the match                               | Accepted |
 
 ## Template
 

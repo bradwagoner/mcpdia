@@ -11,6 +11,10 @@ export const RENDER_LEVELS = ['title', 'summary', 'snippet', 'full'] as const;
 export type RenderLevel = (typeof RENDER_LEVELS)[number];
 
 export const SNIPPET_LENGTH = 300;
+/** A searched word past the cut gets this much intro, then the rest of the length around the word (ADR 0020). */
+export const SNIPPET_INTRO = 100;
+/** The window around the word starts about this far before it, so the lead-in shows too. */
+const SNIPPET_LEAD = 80;
 
 export interface RenderExtras {
   edgeCount?: number;
@@ -18,6 +22,8 @@ export interface RenderExtras {
   supersededByKey?: string;
   /** Query words a partial search hit matched. */
   matched?: string[];
+  /** Search words. A snippet shows the text around the first one that would otherwise be cut off. */
+  terms?: string[];
 }
 
 /**
@@ -46,7 +52,9 @@ export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, e
   if (extras.matched?.length) markers.push(`matched: ${extras.matched.join(', ')}`);
   const lines = [titleLine(ctx, node) + (markers.length ? ` (${markers.join('; ')})` : '')];
   if (level === 'summary' || level === 'snippet') lines.push(`  ${summaryLine(node, extras)}`);
-  if (level === 'snippet' && node.body) lines.push(`  ${snippet(node.body)}`);
+  if (level === 'snippet' && node.body) {
+    lines.push(`  ${snippet(node.body, extras.terms, `${node.title} ${node.summary ?? ''}`)}`);
+  }
   return lines.join('\n');
 }
 
@@ -87,9 +95,47 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-function snippet(body: string): string {
+/**
+ * The first SNIPPET_LENGTH characters of the body. If a search word shows up only past that
+ * (not in the title, summary or the first part), the snippet is a short intro plus the text
+ * around that word instead, cut at whole words, with a count of what was left out.
+ */
+export function snippet(body: string, terms: string[] = [], shown = ''): string {
   const flat = body.replace(/\s+/g, ' ').trim();
-  return flat.length > SNIPPET_LENGTH ? `${flat.slice(0, SNIPPET_LENGTH)}…` : flat;
+  if (flat.length <= SNIPPET_LENGTH) return flat;
+  const head = flat.slice(0, SNIPPET_LENGTH);
+
+  const hidden = terms
+    .filter((t) => wordIndex(`${shown} ${head}`, t) < 0)
+    .map((t) => wordIndex(flat, t))
+    .filter((i) => i >= 0);
+  if (hidden.length === 0) return `${head}…`;
+
+  const introEnd = wordEndBefore(flat, SNIPPET_INTRO);
+  const start = wordStartAfter(flat, Math.max(introEnd, Math.min(...hidden) - SNIPPET_LEAD));
+  const end = wordEndBefore(flat, start + SNIPPET_LENGTH - SNIPPET_INTRO);
+  const left = flat.length - introEnd - (end - start);
+  return `${flat.slice(0, introEnd)} … ${flat.slice(start, end)}${end < flat.length ? ' …' : ''} (+${left} chars)`;
+}
+
+/** Where a word starting with `term` begins, matching like the search index: any case, `_` and punctuation break words. */
+function wordIndex(text: string, term: string): number {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.search(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}`, 'iu'));
+}
+
+/** `at`, moved back to the end of the word it falls in. */
+function wordEndBefore(text: string, at: number): number {
+  if (at >= text.length) return text.length;
+  const space = text.lastIndexOf(' ', at);
+  return space > 0 ? space : at;
+}
+
+/** `at`, moved forward to the start of the next word unless it already starts one. */
+function wordStartAfter(text: string, at: number): number {
+  if (at <= 0 || text[at - 1] === ' ') return at;
+  const space = text.indexOf(' ', at);
+  return space < 0 ? at : space + 1;
 }
 
 function day(iso: string): string {

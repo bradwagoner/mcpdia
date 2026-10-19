@@ -26,6 +26,8 @@ export interface SearchHit {
 
 export interface SearchOutput {
   query: string;
+  /** The words searched for, after dropping question words. */
+  terms: string[];
   hits: SearchHit[];
   total: number;
   /** No node matched every word, so these hits match only some of them. */
@@ -97,6 +99,7 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
   const counts = wantsCounts ? await store.edgeCounts(result.nodes.map((n) => n.id)) : undefined;
   return {
     query: input.query,
+    terms,
     hits: await Promise.all(
       result.nodes.map(async (node) => ({
         node,

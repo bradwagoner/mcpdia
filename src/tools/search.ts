@@ -41,6 +41,7 @@ export function registerSearch({ server, store, ctx }: Deps): void {
               edgeCount: h.edgeCount,
               matched: h.matched,
               supersededByKey: h.supersededByKey,
+              terms: out.terms,
             })}`,
         );
         const lines = [header, ...entries];

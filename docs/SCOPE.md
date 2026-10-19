@@ -63,6 +63,7 @@ This file does two jobs: it states what each release will and will not include, 
 Newest first. Each entry: what shipped, what changed from the plan, what we learned.
 
 ### Unreleased
+- Snippets show the match (2026-10-19): when a searched word only appears past the 300-character cut, a `search` snippet shows about 100 characters of intro, then the text around that word, cut at whole words, with `(+N chars)` for what was left out. Found by the bench: a question about the live API key prefix missed because the answer started 21 characters past the cut (ADR 0020).
 - Smaller session cost (2026-10-19, #15): `upsert.version` is a plain number, so its listing no longer carries the safe-integer bounds zod adds to integers; a few parameter hints that repeated their names are gone; and stubs no longer say "never verified". The fixed session cost went from about 1,790 to 1,740 estimated tokens (3% less), and the median search-then-get answer from 322 to 314. The `$schema` key the SDK adds to every tool (about 150 tokens) stays until the SDK can leave it out.
 - Install check (2026-10-16, #5): confirmed `npm install` needs no build tools on Windows, since better-sqlite3 ships prebuilt binaries in the package (ADR 0010). A test fails if an upgrade brings node-gyp back.
 - No guesses (2026-10-16): tools no longer answer with "did you mean". A new type, an unknown type filter or a missing key is stated as a fact with where to look (ADR 0018).
