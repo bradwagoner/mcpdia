@@ -55,7 +55,7 @@ export function summaryLine(node: NodeRecord, extras: RenderExtras): string {
   const parts: string[] = [];
   if (node.summary) parts.push(node.summary);
   if (extras.edgeCount !== undefined) parts.push(plural(extras.edgeCount, 'link'));
-  parts.push(node.lastVerifiedAt ? `verified ${day(node.lastVerifiedAt)}` : 'never verified');
+  if (node.lastVerifiedAt) parts.push(`verified ${day(node.lastVerifiedAt)}`);
   return parts.join(' · ');
 }
 

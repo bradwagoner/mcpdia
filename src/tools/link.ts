@@ -10,8 +10,8 @@ export function registerLink({ server, store, ctx }: Deps): void {
       description:
         'Link two nodes with a typed edge, e.g. depends_on, part_of, references, related_to. The target may not exist yet.',
       inputSchema: {
-        from: z.string().describe('Key of the source node.'),
-        to: z.string().describe('Key of the target node.'),
+        from: z.string(),
+        to: z.string(),
         type: z.string(),
         note: z.string().optional().describe('Short reason for the link.'),
       },

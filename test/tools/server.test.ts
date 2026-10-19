@@ -137,7 +137,7 @@ describe('MCP server', () => {
     expect((await call('search', { query: 'permission' })).text).toBe(
       '1 result for "permission":\n' +
         '- concept/permissions [concept] Permission system\n' +
-        '  Roles grant actions; groups hold roles. · 2 links · never verified',
+        '  Roles grant actions; groups hold roles. · 2 links',
     );
     expect((await call('search', { query: 'permission billing', level: 'title' })).text).toBe(
       'No node matched all words of "permission billing". 1 partial match; check it before relying on it:\n' +
@@ -153,6 +153,11 @@ describe('MCP server', () => {
     const oriented = (await call('orient', { focus: 'roles' })).text;
     expect(oriented).toContain('Graph: 2 nodes · 1 node type · 2 edge types');
     expect(oriented).toContain('Possibly relevant to "roles":\n- concept/roles [concept] Roles');
+
+    await call('verify', { keys: ['concept/permissions'] });
+    expect((await call('search', { query: 'permission' })).text).toMatch(
+      /^ {2}Roles grant actions; groups hold roles\. · 2 links · verified \d{4}-\d{2}-\d{2}$/m,
+    );
   });
 
   it('reports problems as one line with the error flag', async () => {
