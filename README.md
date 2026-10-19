@@ -41,6 +41,20 @@ The tools are `orient`, `search`, `get`, `upsert`, `annotate`, `link`, `supersed
 
 Export the graph as JSON Lines with `node dist/index.js export --out graph.jsonl`. It writes active nodes and their links; add `--namespace ns` to pick namespaces, or `--all-status` to include superseded and deleted nodes. The format is in [`docs/schema.md`](docs/schema.md#jsonl-export-format).
 
+### Measure it yourself
+
+Set `MCPEDIA_METRICS=1` and every tool call adds one line to `mcpedia-metrics.jsonl` next to your database:
+
+```json
+{"ts":"2026-10-19T15:40:02.114Z","session":"01K7…","tool":"search","ms":4,"ok":true,"req_chars":38,"res_chars":912,"level":"summary"}
+```
+
+Each line is something the server measured: no estimates, no query text, no node content. Pair it with Claude's own usage report (`claude -p --output-format json`) to see where a session's tokens went, request by request.
+
+```bash
+claude mcp add mcpedia -e MCPEDIA_METRICS=1 -- node /path/to/mcpedia/dist/index.js
+```
+
 ## Security
 
 MCPedia feeds stored text back to LLMs, so treat what it returns as data, not instructions: a node can inform an agent, never authorize it. Today it runs locally over stdio against a SQLite file on your machine, with no network port and no auth; team mode adds token auth and per-namespace permissions. Details in [SECURITY.md](SECURITY.md).

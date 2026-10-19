@@ -22,7 +22,9 @@ Short records of the significant design decisions in this project: what we chose
 | 0016 | Tools say what happened                               | Accepted |
 | 0017 | Read and restore deleted nodes                        | Accepted |
 | 0018 | State facts, don't guess                              | Accepted |
+| 0019 | Per-call metrics log                                  | Accepted |
 | 0020 | Snippets show the match                               | Accepted |
+| 0021 | Search tops up short results with partial matches     | Accepted |
 
 ## Template
 

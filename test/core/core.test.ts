@@ -153,6 +153,29 @@ describe('search', () => {
     expect(out.hits.every((h) => h.edgeCount === 0)).toBe(true);
   });
 
+  it('tops up a short every-word result with partial matches', async () => {
+    await upsert(ctx, store, { type: 'concept', title: 'Billing permissions' });
+    await upsert(ctx, store, perms);
+    await upsert(ctx, store, { type: 'concept', title: 'Billing pipeline' });
+    const out = await search(ctx, store, { query: 'billing permissions', level: 'title', limit: 10 });
+    expect(out).toMatchObject({ total: 3, fullMatches: 1, partial: false });
+    expect(out.hits[0]).toMatchObject({ node: { title: 'Billing permissions' }, matched: undefined });
+    const rest = Object.fromEntries(out.hits.slice(1).map((h) => [h.node.title, h.matched]));
+    expect(rest).toEqual({ 'Permission system': ['permissions'], 'Billing pipeline': ['billing'] });
+  });
+
+  it('keeps to the limit and never repeats a node', async () => {
+    await upsert(ctx, store, { type: 'concept', title: 'Billing permissions' });
+    await upsert(ctx, store, perms);
+    await upsert(ctx, store, { type: 'concept', title: 'Billing pipeline' });
+    const two = await search(ctx, store, { query: 'billing permissions', level: 'title', limit: 2 });
+    expect(two.hits.map((h) => h.node.title)).toEqual(['Billing permissions', two.hits[1]!.node.title]);
+    expect(two.total).toBe(3);
+    const one = await search(ctx, store, { query: 'billing permissions', level: 'title', limit: 1 });
+    expect(one.hits.map((h) => h.node.title)).toEqual(['Billing permissions']);
+    expect(one.fullMatches).toBe(1);
+  });
+
   it('is not partial when every word matches', async () => {
     await upsert(ctx, store, perms);
     expect((await search(ctx, store, { query: 'permission roles', level: 'title', limit: 10 })).partial).toBe(false);

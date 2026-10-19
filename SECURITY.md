@@ -24,7 +24,7 @@ In v0.1 MCPedia runs in solo mode (ADR 0006):
 - The graph is a **SQLite file on your machine**, `~/.mcpedia/mcpedia.db` by default or the path in `MCPEDIA_DB`. Anyone who can read that file can read the graph, and anyone who can write it can change it. Protect it like any other file in your home directory.
 - There is **no authentication**. The trust boundary is your user account and the MCP clients you connect. Every connected client reads and writes the same graph.
 - `mcpedia export` writes the whole graph as JSONL. Treat the export file with the same care as the database. It refuses to write over the database itself.
-- The optional viewer (`viewer/`) opens the database read-only and serves it on `localhost` only. It answers only to local host names, so a web page can't reach it through DNS rebinding.
+- The optional viewer (`viewer/`) opens the database read-only and serves it on `localhost` only. It answers only to local host names, so a web page can't reach it through DNS rebinding. With `--lan` it also listens on your local network, still read-only, and anyone on that network can read the graph, so use it only on networks you trust.
 
 Keep secrets out of the graph. API keys, passwords and personal data do not belong in nodes; there is no per-node access control and history is never purged.
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { once } from 'node:events';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { assertNotDatabase, errorLine, pickCommand, writeLinesAtomically } from './cli.js';
 import { soloContext } from './context.js';
 import { exportJsonl, type ExportInput } from './core/export.js';
+import { openMetricsLog } from './metrics.js';
 import { createServer } from './server.js';
 import { SqliteStore } from './store/sqlite/SqliteStore.js';
 
@@ -59,10 +60,13 @@ async function runExport(args: string[]): Promise<void> {
 /** Solo mode (ADR 0006): a local SQLite file over stdio. */
 async function main(): Promise<void> {
   const store = new SqliteStore(dbPath);
-  const server = createServer(store, soloContext());
+  const metrics =
+    process.env.MCPEDIA_METRICS === '1' ? openMetricsLog(join(dirname(dbPath), 'mcpedia-metrics.jsonl')) : undefined;
+  const server = createServer(store, soloContext(), { metrics });
 
   const shutdown = async () => {
     await server.close();
+    await metrics?.flush();
     await store.close();
     process.exit(0);
   };
@@ -72,6 +76,7 @@ async function main(): Promise<void> {
   await server.connect(new StdioServerTransport());
   // stdout carries the protocol, so log to stderr.
   console.error(`mcpedia ${dbPath}`);
+  if (metrics) console.error(`metrics ${metrics.file}`);
 }
 
 async function run(argv: string[]): Promise<void> {

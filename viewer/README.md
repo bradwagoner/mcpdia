@@ -27,6 +27,8 @@ npm start                   # http://localhost:8000, live from ~/.mcpedia/mcpedi
 
 `npm start` opens the database read-only and only listens on localhost. To point it at another graph, run `npm start -- path/to/graph.db`.
 
+Want it on your phone or another computer? `npm start -- --lan` (or `npm run dev -- --lan`) also listens on your local network and prints the address to open. There's no login, so anyone on that network can read the graph; use it on networks you trust. On Windows, allow Node through the firewall for **Private networks** when asked.
+
 Working on the viewer itself? `npm run dev` does the same as `npm start`, and also rebuilds on save and reloads the page, keeping your view.
 
 For a snapshot instead, `npm run export` writes `www/data/mcpedia.json`; open it with `?data=data/mcpedia.json`.
