@@ -74,7 +74,9 @@ export default class SessionProvider {
 
       let output = session.answer;
       if (vars.kind === 'write') {
-        const landed = this.side === 'mcpedia' ? graphHas(dbPath, vars.needle) : markdownHas(work, vars.needle);
+        const needles = (vars.needles ?? vars.needle).split('|');
+        const has = (n) => (this.side === 'mcpedia' ? graphHas(dbPath, n) : markdownHas(work, n));
+        const landed = needles.every(has);
         output += `\n[write check: ${landed ? 'landed' : 'missing'}]`;
       }
 

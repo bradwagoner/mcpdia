@@ -22,3 +22,5 @@ Same budget as before. `get` at `snippet` level has no query, so it keeps the pl
 
 ## Consequences
 A stub carries the fact a search word points to, at about the same cost. If you expected the plain first 300 characters, use `get` with `level: snippet`.
+
+Update 2026-10-20: inside a long word or URL, the window cuts mid-word rather than skip past the match. The match is found with a light suffix strip (`-s`, `-es`, `-ed`, `-ing`), so "permissions" finds "permission" the way the index does; exact stem positions from the index are a later step.

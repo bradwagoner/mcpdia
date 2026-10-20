@@ -39,6 +39,21 @@ describe('snippet', () => {
     expect(snippet(body, ['ive'])).toBe(`${body.slice(0, SNIPPET_LENGTH)}…`);
   });
 
+  it('keeps a match inside a long identifier', () => {
+    const long = 'intro '.repeat(65) + 'key_' + 'segment_'.repeat(12) + 'live_value trailing text.';
+    expect(snippet(long, ['live'])).toContain('live_value');
+  });
+
+  it('keeps a match inside a long URL', () => {
+    const url = `${filler} See https://example.com/${'a'.repeat(120)}/live/docs for more. ${filler}`;
+    expect(snippet(url, ['live'])).toContain('/live/docs');
+  });
+
+  it('finds a stemmed match the search index would find', () => {
+    const stemmed = `${filler} Each permission is cached for five minutes. ${filler}`;
+    expect(snippet(stemmed, ['permissions'])).toContain('permission is cached');
+  });
+
   it('ends without a trailing … when the window reaches the end', () => {
     const out = snippet(`${filler} The end says kst_live_.`, ['live']);
     expect(out).toMatch(/kst_live_\. \(\+\d+ chars\)$/);
