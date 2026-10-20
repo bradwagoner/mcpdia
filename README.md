@@ -59,7 +59,7 @@ Register it with Claude Code:
 claude mcp add mcpdia -- node /path/to/mcpdia/dist/index.js
 ```
 
-The graph lives in `~/.mcpedia/mcpedia.db`. Set `MCPEDIA_DB` to keep it somewhere else.
+The graph lives in `~/.mcpdia/mcpdia.db`. Set `MCPDIA_DB` to keep it somewhere else.
 
 ### Export
 
@@ -71,7 +71,7 @@ This writes active nodes and their links. Add `--namespace ns` to pick namespace
 
 ### Measure it yourself
 
-Set `MCPEDIA_METRICS=1` and every tool call adds one line to `mcpedia-metrics.jsonl` next to your database:
+Set `MCPDIA_METRICS=1` and every tool call adds one line to `mcpdia-metrics.jsonl` next to your database:
 
 ```json
 {"ts":"2026-10-19T15:40:02.114Z","session":"01K7…","tool":"search","ms":4,"ok":true,"req_chars":38,"res_chars":912,"level":"summary"}
@@ -80,7 +80,7 @@ Set `MCPEDIA_METRICS=1` and every tool call adds one line to `mcpedia-metrics.js
 Each line is something the server measured: no estimates, no query text, no node content. Pair it with Claude's own usage report (`claude -p --output-format json`) to see where a session's tokens went, request by request.
 
 ```bash
-claude mcp add mcpdia -e MCPEDIA_METRICS=1 -- node /path/to/mcpdia/dist/index.js
+claude mcp add mcpdia -e MCPDIA_METRICS=1 -- node /path/to/mcpdia/dist/index.js
 ```
 
 ## Security

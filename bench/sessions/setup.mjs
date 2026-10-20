@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 /**
  * Builds the starting points from the Kestrel dataset: a markdown memory
  * (CLAUDE.md index plus topic files), the same facts as one CLAUDE.md, and an
- * MCPedia database. Needs the root `npm run bench:build` first. No model is called.
+ * MCPdia database. Needs the root `npm run bench:build` first. No model is called.
  */
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '../..');
@@ -29,7 +29,7 @@ const onefileDir = join(FIXTURES, 'markdown-onefile');
 mkdirSync(onefileDir, { recursive: true });
 writeFileSync(join(onefileDir, 'CLAUDE.md'), renderWhole() + '\n');
 
-const dbPath = join(FIXTURES, 'mcpedia.db');
+const dbPath = join(FIXTURES, 'mcpdia.db');
 const session = await openSession(dbPath);
 await seed(session);
 await session.close();

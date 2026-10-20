@@ -11,7 +11,7 @@ graphStoreSuite('sqlite', async () => new SqliteStore(':memory:'));
 
 describe('SqliteStore', () => {
   it('lists more nodes than SQLite binds in one statement', async () => {
-    const path = join(mkdtempSync(join(tmpdir(), 'mcpedia-big-')), 'graph.db');
+    const path = join(mkdtempSync(join(tmpdir(), 'mcpdia-big-')), 'graph.db');
     await new SqliteStore(path).close();
     const db = new Database(path);
     const insert = db.prepare(
@@ -34,7 +34,7 @@ describe('SqliteStore', () => {
 
 describe('migrate', () => {
   it('applies each numbered file once, in order', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mcpedia-migrations-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mcpdia-migrations-'));
     writeFileSync(join(dir, '002_more.sql'), 'ALTER TABLE t ADD COLUMN b TEXT;');
     writeFileSync(join(dir, '001_first.sql'), 'CREATE TABLE t (a TEXT);');
     writeFileSync(join(dir, 'notes.txt'), 'ignored');
@@ -49,7 +49,7 @@ describe('migrate', () => {
   });
 
   it('rolls back a failing file and leaves it unrecorded', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mcpedia-migrations-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mcpdia-migrations-'));
     writeFileSync(join(dir, '001_bad.sql'), 'CREATE TABLE t (a TEXT); NOT SQL;');
     const db = new Database(':memory:');
     expect(() => migrate(db, dir)).toThrow();

@@ -19,7 +19,7 @@ export async function openSession(dbPath = ':memory:'): Promise<GraphSession> {
   const server = createServer(store, soloContext());
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   await server.connect(serverSide);
-  const client = new Client({ name: 'mcpedia-bench', version: '0' });
+  const client = new Client({ name: 'mcpdia-bench', version: '0' });
   await client.connect(clientSide);
 
   async function call(name: string, args: Record<string, unknown>): Promise<string> {

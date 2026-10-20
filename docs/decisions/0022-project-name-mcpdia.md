@@ -13,13 +13,13 @@ The project is **MCPdia**, short for **Model Context Protocol: Distilled, Indexe
 - The repository is `bradwagoner/mcpdia`; the old URL redirects.
 - The npm package is `@bradwagoner/mcpdia` and the command is `mcpdia`.
 - The README, docs, server name, `orient` text and viewer use the new name.
-- Runtime names stay as they are for now: the `MCPEDIA_DB` and `MCPEDIA_METRICS` variables, the `~/.mcpedia` folder, the `mcpedia-metrics.jsonl` log and the `mcpedia-jsonl` export format id. Renaming them would break existing graphs, logs and exports, so it needs a fallback to the old names and gets its own decision.
+- Runtime names follow: `MCPDIA_DB`, `MCPDIA_METRICS`, the `~/.mcpdia/mcpdia.db` default, the `mcpdia-metrics.jsonl` log and the `mcpdia-jsonl` export format id. There is no fallback to the old names: nothing has been published, so the only existing setup moves by hand.
 - Older decision records keep the name they were written with.
 
 ## Alternatives considered
 - **Keep MCPedia:** no work, but it keeps the collision ADR 0009 flagged.
-- **Rename everything at once, runtime names included:** consistent, but every existing setup would lose its graph until moved by hand.
+- **Keep the old runtime names, or read both:** no move needed, but a fallback is code to carry for a setup that exists only on the author's machine.
 
 ## Consequences
 - A distinct name in search results and on npm. GitHub and npm should still be checked for `mcpdia` before publishing.
-- Until the runtime names follow, the README shows `MCPEDIA_*` variables next to the MCPdia name.
+- An existing graph moves by renaming `~/.mcpedia` to `~/.mcpdia` and `mcpedia.db` to `mcpdia.db`, then re-registering the server as `mcpdia`, which renames its tools to `mcp__mcpdia__*`.

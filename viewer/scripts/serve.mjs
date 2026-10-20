@@ -1,6 +1,6 @@
 // Serves the viewer and reads the graph live, so the page can follow changes the MCP server makes.
-// Usage (from viewer/): npm start  [-- path/to/mcpedia.db]
-//                        npm run dev [-- path/to/mcpedia.db]   also rebuilds on save and reloads the page
+// Usage (from viewer/): npm start  [-- path/to/mcpdia.db]
+//                        npm run dev [-- path/to/mcpdia.db]   also rebuilds on save and reloads the page
 //                        add --lan to open it to other devices on your network
 // Listens on 127.0.0.1 only (or every interface with --lan), answers only to this machine's own
 // names, and opens the database read-only.

@@ -15,7 +15,7 @@ describe('metrics log (ADR 0019)', () => {
   let client: Client;
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'mcpedia-metrics-'));
+    dir = mkdtempSync(join(tmpdir(), 'mcpdia-metrics-'));
     store = new SqliteStore(':memory:');
   });
 
@@ -41,7 +41,7 @@ describe('metrics log (ADR 0019)', () => {
   }
 
   it('writes one line per tool call with raw sizes and timing', async () => {
-    const log = openMetricsLog(join(dir, 'mcpedia-metrics.jsonl'));
+    const log = openMetricsLog(join(dir, 'mcpdia-metrics.jsonl'));
     await connect(log);
     await client.callTool({ name: 'upsert', arguments: { type: 'concept', title: 'Permissions' } });
     const result = await client.callTool({ name: 'search', arguments: { query: 'permissions', level: 'title' } });
@@ -69,7 +69,7 @@ describe('metrics log (ADR 0019)', () => {
   });
 
   it('stores no query text or node content', async () => {
-    const log = openMetricsLog(join(dir, 'mcpedia-metrics.jsonl'));
+    const log = openMetricsLog(join(dir, 'mcpdia-metrics.jsonl'));
     await connect(log);
     await client.callTool({ name: 'upsert', arguments: { type: 'concept', title: 'Secret handshake' } });
     await client.callTool({ name: 'search', arguments: { query: 'handshake' } });
@@ -80,11 +80,11 @@ describe('metrics log (ADR 0019)', () => {
   it('writes nothing when off', async () => {
     await connect();
     await client.callTool({ name: 'orient', arguments: {} });
-    expect(() => readFileSync(join(dir, 'mcpedia-metrics.jsonl'))).toThrow();
+    expect(() => readFileSync(join(dir, 'mcpdia-metrics.jsonl'))).toThrow();
   });
 
   it('never fails a tool call when the log cannot be written', async () => {
-    const log = openMetricsLog(join(dir, 'no-such-dir', 'mcpedia-metrics.jsonl'));
+    const log = openMetricsLog(join(dir, 'no-such-dir', 'mcpdia-metrics.jsonl'));
     await connect(log);
     const result = await client.callTool({ name: 'orient', arguments: {} });
     await log.flush();

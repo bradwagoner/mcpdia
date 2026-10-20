@@ -66,7 +66,8 @@ const rows = sessions.map((s) => {
     s.run.replace(/-\d{4}-\d{2}-\d{2}T.*$/, ''),
     s.at,
     s.n,
-    s.side,
+    // Runs from before the rename (ADR 0022) recorded this side as "mcpedia".
+    s.side === 'mcpedia' ? 'mcpdia' : s.side,
     s.kind,
     s.prompt.replace(/^.*?: /, ''),
     result?.needle,

@@ -1,4 +1,4 @@
-// Generate a fake graph shaped like MCPedia data, for scale tests.
+// Generate a fake graph shaped like MCPdia data, for scale tests.
 // Usage: node scripts/generate.mjs 50000 [www/data/generated-50000.json]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';

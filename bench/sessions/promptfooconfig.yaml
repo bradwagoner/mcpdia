@@ -5,9 +5,9 @@ prompts:
   - '{{prompt}}'
 providers:
   - id: file://provider.mjs
-    label: mcpedia
+    label: mcpdia
     config:
-      side: mcpedia
+      side: mcpdia
   - id: file://provider.mjs
     label: markdown
     config:

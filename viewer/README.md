@@ -22,7 +22,7 @@ Both renderers have the same features. Sigma.js (`src/main.ts`) is the default: 
 ```
 cd viewer
 npm install
-npm start                   # http://localhost:8000, live from ~/.mcpedia/mcpedia.db (or $MCPEDIA_DB)
+npm start                   # http://localhost:8000, live from ~/.mcpdia/mcpdia.db (or $MCPDIA_DB)
 ```
 
 `npm start` opens the database read-only and only listens on localhost. To point it at another graph, run `npm start -- path/to/graph.db`.
@@ -31,7 +31,7 @@ Want it on your phone or another computer? `npm start -- --lan` (or `npm run dev
 
 Working on the viewer itself? `npm run dev` does the same as `npm start`, and also rebuilds on save and reloads the page, keeping your view.
 
-For a snapshot instead, `npm run export` writes `www/data/mcpedia.json`; open it with `?data=data/mcpedia.json`.
+For a snapshot instead, `npm run export` writes `www/data/mcpdia.json`; open it with `?data=data/mcpdia.json`.
 
 For a scale test, `npm run generate -- 10000` writes fake data; open `http://localhost:8000/?data=data/generated-10000.json`.
 

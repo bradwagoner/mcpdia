@@ -18,13 +18,13 @@ import { fileURLToPath } from 'node:url';
 /**
  * A promptfoo provider that runs one Claude session per test, through the
  * Claude Agent SDK, against a fresh copy of one side's memory:
- * `side: mcpedia` gets the MCPedia server and its database, `side: markdown`
+ * `side: mcpdia` gets the MCPdia server and its database, `side: markdown`
  * gets CLAUDE.md plus topic files in its working folder, and
  * `side: markdown-onefile` gets the same facts as one CLAUDE.md.
  *
  * Paid sessions use the API key in bench.env, never a Claude login. Spending
  * stops at the run cap set by run.mjs. Everything a session produces is kept
- * under results/ (see the README). With MCPEDIA_BENCH_DRY=1 no model is
+ * under results/ (see the README). With MCPDIA_BENCH_DRY=1 no model is
  * called: the session is replaced by a canned answer, to check the wiring.
  */
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -34,15 +34,15 @@ const RESULTS = join(HERE, 'results');
 const SERVER = join(ROOT, 'dist/index.js');
 // Windows' Notepad tends to save bench.env as bench.env.txt, so either name works.
 const KEY_FILE =
-  process.env.MCPEDIA_BENCH_ENV_FILE ??
+  process.env.MCPDIA_BENCH_ENV_FILE ??
   ['bench.env', 'bench.env.txt'].map((f) => join(homedir(), '.mcpdia-secrets', f)).find((f) => existsSync(f)) ??
   join(homedir(), '.mcpdia-secrets', 'bench.env');
 
-const DRY = process.env.MCPEDIA_BENCH_DRY === '1';
-const RUN_CAP = Number(process.env.MCPEDIA_BENCH_CAP_USD ?? 0);
-const RUN_ID = process.env.MCPEDIA_BENCH_RUN ?? 'adhoc';
+const DRY = process.env.MCPDIA_BENCH_DRY === '1';
+const RUN_CAP = Number(process.env.MCPDIA_BENCH_CAP_USD ?? 0);
+const RUN_ID = process.env.MCPDIA_BENCH_RUN ?? 'adhoc';
 
-const SIDES = ['mcpedia', 'markdown', 'markdown-onefile'];
+const SIDES = ['mcpdia', 'markdown', 'markdown-onefile'];
 
 // Shared by all providers in one promptfoo run, which is one process.
 let spent = 0;
@@ -63,10 +63,10 @@ export default class SessionProvider {
   async callApi(prompt, context) {
     const vars = context?.vars ?? {};
     const n = ++sessionNumber;
-    const work = mkdtempSync(join(tmpdir(), `mcpedia-bench-${this.side}-`));
+    const work = mkdtempSync(join(tmpdir(), `mcpdia-bench-${this.side}-`));
     try {
-      const dbPath = join(work, 'mcpedia.db');
-      if (this.side === 'mcpedia') copyFileSync(join(FIXTURES, 'mcpedia.db'), dbPath);
+      const dbPath = join(work, 'mcpdia.db');
+      if (this.side === 'mcpdia') copyFileSync(join(FIXTURES, 'mcpdia.db'), dbPath);
       else cpSync(join(FIXTURES, this.side), work, { recursive: true });
 
       const session = DRY ? dryRun(vars) : await this.run(prompt, work, dbPath);
@@ -75,7 +75,7 @@ export default class SessionProvider {
       let output = session.answer;
       if (vars.kind === 'write') {
         const needles = (vars.needles ?? vars.needle).split('|');
-        const has = (n) => (this.side === 'mcpedia' ? graphHas(dbPath, n) : markdownHas(work, n));
+        const has = (n) => (this.side === 'mcpdia' ? graphHas(dbPath, n) : markdownHas(work, n));
         const landed = needles.every(has);
         output += `\n[write check: ${landed ? 'landed' : 'missing'}]`;
       }
@@ -120,7 +120,7 @@ export default class SessionProvider {
     for (const name of ['ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_OAUTH_TOKEN', 'ENABLE_TOOL_SEARCH'])
       delete env[name];
 
-    const mcpedia = this.side === 'mcpedia';
+    const mcpdia = this.side === 'mcpdia';
     const messages = [];
     let result;
     for await (const message of query({
@@ -131,20 +131,20 @@ export default class SessionProvider {
         maxTurns: this.config.maxTurns,
         maxBudgetUsd: Math.min(this.config.sessionCapUsd, remaining),
         // Isolation: no personal settings, no other MCP servers. The markdown sides load only their CLAUDE.md.
-        settingSources: mcpedia ? [] : ['project'],
+        settingSources: mcpdia ? [] : ['project'],
         strictMcpConfig: true,
-        mcpServers: mcpedia
+        mcpServers: mcpdia
           ? {
-              mcpedia: {
+              mcpdia: {
                 type: 'stdio',
                 command: process.execPath,
                 args: [SERVER],
-                env: { MCPEDIA_DB: dbPath, MCPEDIA_METRICS: '1' },
+                env: { MCPDIA_DB: dbPath, MCPDIA_METRICS: '1' },
               },
             }
           : {},
         permissionMode: 'dontAsk',
-        allowedTools: ['Read', 'Grep', 'Glob', 'Edit', ...(mcpedia ? ['mcp__mcpedia__*'] : [])],
+        allowedTools: ['Read', 'Grep', 'Glob', 'Edit', ...(mcpdia ? ['mcp__mcpdia__*'] : [])],
         // allowedTools only pre-approves; these are blocked outright so read-only shell commands can't slip through.
         disallowedTools: ['Bash', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'Task'],
         env,
@@ -176,12 +176,12 @@ export default class SessionProvider {
 }
 
 /**
- * Copies what a session leaves behind before its folder is deleted: MCPedia's
+ * Copies what a session leaves behind before its folder is deleted: MCPdia's
  * per-call log, and for writes the memory as it ended (markdown files, or the
  * graph as an export).
  */
 function keep(work, name, side, kind, dbPath) {
-  const metrics = join(work, 'mcpedia-metrics.jsonl');
+  const metrics = join(work, 'mcpdia-metrics.jsonl');
   if (existsSync(metrics)) {
     mkdirSync(join(RESULTS, 'metrics'), { recursive: true });
     copyFileSync(metrics, join(RESULTS, 'metrics', `${name}.jsonl`));
@@ -189,7 +189,7 @@ function keep(work, name, side, kind, dbPath) {
   if (kind !== 'write') return;
   const dir = join(RESULTS, 'end-state', name);
   mkdirSync(dir, { recursive: true });
-  if (side !== 'mcpedia') {
+  if (side !== 'mcpdia') {
     for (const f of readdirSync(work).filter((f) => f.endsWith('.md'))) copyFileSync(join(work, f), join(dir, f));
   } else {
     writeFileSync(join(dir, 'graph.jsonl'), exportGraph(dbPath));
@@ -244,14 +244,14 @@ function markdownHas(dir, needle) {
     .some((f) => readFileSync(join(dir, f), 'utf8').toLowerCase().includes(needle.toLowerCase()));
 }
 
-/** Reads the session's database back through MCPedia's own export. */
+/** Reads the session's database back through MCPdia's own export. */
 function graphHas(dbPath, needle) {
   return exportGraph(dbPath).toLowerCase().includes(needle.toLowerCase());
 }
 
 function exportGraph(dbPath) {
   return execFileSync(process.execPath, [SERVER, 'export'], {
-    env: { ...process.env, MCPEDIA_DB: dbPath },
+    env: { ...process.env, MCPDIA_DB: dbPath },
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
   });
