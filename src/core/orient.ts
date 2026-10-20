@@ -18,7 +18,7 @@ export interface OrientOutput {
 }
 
 export const DEFAULT_INTRO = [
-  'MCPedia: a knowledge graph of linked notes. Loop: search → read stubs → get the few that matter → write back (upsert, annotate, link) → feedback on what helped.',
+  'MCPdia: a knowledge graph of linked notes. Loop: search → read stubs → get the few that matter → write back (upsert, annotate, link) → feedback on what helped.',
   "Notes and observations go in linked notes (annotate); edit a node's body only to correct shared facts.",
 ].join('\n');
 

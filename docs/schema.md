@@ -152,7 +152,7 @@ Search is a method on `GraphStore`, so its implementation is private to each ada
 
 ### JSONL export format
 
-`mcpedia export [--namespace ns]... [--all-status] [--out file]` writes the graph as JSON Lines (stdout when `--out` is omitted). It is store-agnostic: the core builds it from `GraphStore.listNodes` and `listEdges`, and v0.2 import reads it back.
+`mcpdia export [--namespace ns]... [--all-status] [--out file]` writes the graph as JSON Lines (stdout when `--out` is omitted). It is store-agnostic: the core builds it from `GraphStore.listNodes` and `listEdges`, and v0.2 import reads it back.
 
 1. One `header` line: `{"kind":"header","format":"mcpedia-jsonl","version":1,"exportedAt","namespaces","statuses","nodes","edges"}`.
 2. One `node` line per node in the namespaces, oldest first. Active nodes only; with `--all-status`, superseded and deleted nodes too (the header's `statuses` says which). Fields are the node record in camelCase (`id`, `namespace`, `key`, `type`, `title`, `summary`, `body`, `properties`, `aliases`, `tags`, `status`, `supersededBy`, `version`, `source`, `author`, `updatedBy`, `createdAt`, `updatedAt`, `lastVerifiedAt`, feedback counters).
@@ -195,5 +195,5 @@ CREATE TABLE node_embeddings (
 1. **Cross-namespace edges: resolved (ADR 0007).** Edges are late-bound, so an edge into an unloaded namespace is stored normally and the read handles it (phase 2: returns a "ghost" reference instead of failing).
 2. **Edge identity in packs: resolved.** Edges match on `(from_namespace, from_key, to_namespace, to_key, type)`, which is exactly the unique index. No separate edge key needed.
 3. **Pinned nodes.** Currently a `settings` value (list of keys). Should pins instead be a reserved edge type or tag so they are visible in the graph itself?
-4. **Tag normalization.** Same rules as types, or looser?
+4. **Tag normalization: resolved.** Tags normalize with the same rules as node types.
 5. **Body size.** Do we want a soft limit (and a hint to split long bodies into linked nodes)? Large bodies undercut the token-saving goal.

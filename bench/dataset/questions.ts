@@ -31,7 +31,7 @@ export const questions: Question[] = [
     answer: 'concept/builtin-roles',
     needle: '72 hours',
   },
-  { question: 'How deep can groups be nested?', answer: 'concept/groups', needle: 'one level only' },
+  { question: 'How deep can groups be nested?', answer: 'concept/groups', needle: 'one level' },
   {
     question: 'What HTTP status does a failed permission check return?',
     answer: 'concept/permission-check',
@@ -116,7 +116,7 @@ export const questions: Question[] = [
   {
     question: 'Are invoice PDFs re-rendered when the template changes?',
     answer: 'concept/invoice-pdf',
-    needle: 'never re-rendered',
+    needle: 'rendered once',
   },
   {
     question: 'Why did we choose Textract over Google Document AI?',

@@ -1,24 +1,25 @@
 #!/usr/bin/env node
 import { once } from 'node:events';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { assertNotDatabase, errorLine, pickCommand, writeLinesAtomically } from './cli.js';
 import { soloContext } from './context.js';
 import { exportJsonl, type ExportInput } from './core/export.js';
+import { openMetricsLog } from './metrics.js';
 import { createServer } from './server.js';
 import { SqliteStore } from './store/sqlite/SqliteStore.js';
 
 const dbPath = process.env.MCPEDIA_DB ?? join(homedir(), '.mcpedia', 'mcpedia.db');
 
-const EXPORT_USAGE = `Usage: mcpedia export [--namespace ns]... [--all-status] [--out file]
+const EXPORT_USAGE = `Usage: mcpdia export [--namespace ns]... [--all-status] [--out file]
 
 Writes the graph as JSON Lines to stdout, or to --out.
 Exports active nodes only; --all-status adds superseded and deleted nodes.
 Reads ${dbPath} (set MCPEDIA_DB to use another database).`;
 
-/** `mcpedia export [--namespace ns]... [--all-status] [--out file]`: JSONL to a file or stdout. */
+/** `mcpdia export [--namespace ns]... [--all-status] [--out file]`: JSONL to a file or stdout. */
 async function runExport(args: string[]): Promise<void> {
   const { values } = parseArgs({
     args,
@@ -33,7 +34,7 @@ async function runExport(args: string[]): Promise<void> {
     console.log(EXPORT_USAGE);
     return;
   }
-  // A reader that stops early (`mcpedia export | head`) is fine; stop quietly.
+  // A reader that stops early (`mcpdia export | head`) is fine; stop quietly.
   process.stdout.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EPIPE') process.exit(0);
     throw err;
@@ -59,10 +60,13 @@ async function runExport(args: string[]): Promise<void> {
 /** Solo mode (ADR 0006): a local SQLite file over stdio. */
 async function main(): Promise<void> {
   const store = new SqliteStore(dbPath);
-  const server = createServer(store, soloContext());
+  const metrics =
+    process.env.MCPEDIA_METRICS === '1' ? openMetricsLog(join(dirname(dbPath), 'mcpedia-metrics.jsonl')) : undefined;
+  const server = createServer(store, soloContext(), { metrics });
 
   const shutdown = async () => {
     await server.close();
+    await metrics?.flush();
     await store.close();
     process.exit(0);
   };
@@ -71,7 +75,8 @@ async function main(): Promise<void> {
 
   await server.connect(new StdioServerTransport());
   // stdout carries the protocol, so log to stderr.
-  console.error(`mcpedia ${dbPath}`);
+  console.error(`mcpdia ${dbPath}`);
+  if (metrics) console.error(`metrics ${metrics.file}`);
 }
 
 async function run(argv: string[]): Promise<void> {

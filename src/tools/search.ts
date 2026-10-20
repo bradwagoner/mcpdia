@@ -32,9 +32,12 @@ export function registerSearch({ server, store, ctx }: Deps): void {
             : `No results for "${out.query}". Try fewer or different words.`;
         }
         const count = out.total > out.hits.length ? `${out.hits.length} of ${out.total}` : `${out.total}`;
+        const partials = out.hits.length - out.fullMatches;
         const header = out.partial
           ? `No node matched all words of "${out.query}". ${count} ${out.total === 1 ? 'partial match; check it before relying on it' : 'partial matches; check them before relying on them'}:`
-          : `${count} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
+          : partials > 0
+            ? `${out.fullMatches} result${out.fullMatches === 1 ? '' : 's'} for "${out.query}", then ${partials} ${partials === 1 ? 'partial match; check it before relying on it' : 'partial matches; check them before relying on them'}:`
+            : `${count} result${out.total === 1 ? '' : 's'} for "${out.query}":`;
         const entries = out.hits.map(
           (h) =>
             `- ${renderStub(ctx, h.node, input.level, {

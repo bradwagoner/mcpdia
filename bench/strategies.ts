@@ -32,7 +32,7 @@ function contains(text: string, needle: string): boolean {
   return text.toLowerCase().includes(needle.toLowerCase());
 }
 
-/** MCPedia: search at summary level, then get the top results in order until the needle shows up. */
+/** MCPdia: search at summary level, then get the top results in order until the needle shows up. */
 export async function graph(session: GraphSession, counter: TokenCounter, q: Question): Promise<Outcome> {
   let tokens = 0;
   let steps = 0;
@@ -51,7 +51,7 @@ export async function graph(session: GraphSession, counter: TokenCounter, q: Que
   return { tokens, found: false, steps };
 }
 
-/** The fixed cost of having MCPedia in a session: tool definitions, server instructions and one orient call. */
+/** The fixed cost of having MCPdia in a session: tool definitions, server instructions and one orient call. */
 export async function graphOverhead(session: GraphSession, counter: TokenCounter): Promise<number> {
   const { tools } = await session.client.listTools();
   const definitions = JSON.stringify(

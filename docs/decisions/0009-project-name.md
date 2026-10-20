@@ -1,6 +1,6 @@
 # 0009: Project name
 
-- Status: Accepted
+- Status: Superseded by 0022
 - Date: 2026-10-06
 
 ## Context

@@ -53,6 +53,15 @@ No node matched all words of "permission billing". 1 partial match; check it bef
 - concept/permissions [concept] Permission system (matched: permission)
 ```
 
+When fewer nodes match every word than the limit, partial matches fill the rest, after the full ones (ADR 0021):
+
+```
+1 result for "billing roles", then 2 partial matches; check them before relying on them:
+- concept/billing-roles [concept] Billing roles
+- concept/roles [concept] Roles (matched: roles)
+- concept/permissions [concept] Permission system (matched: roles)
+```
+
 ## get
 "Fetch one or more nodes by key. Optionally include directly linked nodes as titles."
 
