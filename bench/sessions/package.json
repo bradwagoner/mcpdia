@@ -1,8 +1,8 @@
 {
-  "name": "mcpedia-bench-sessions",
+  "name": "mcpdia-bench-sessions",
   "private": true,
   "type": "module",
-  "description": "Side-by-side Claude sessions: MCPedia against markdown memory files.",
+  "description": "Side-by-side Claude sessions: MCPdia against markdown memory files.",
   "scripts": {
     "setup": "node setup.mjs",
     "check": "node run.mjs check",

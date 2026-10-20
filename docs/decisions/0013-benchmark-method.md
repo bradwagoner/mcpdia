@@ -1,6 +1,6 @@
 # 0013: Benchmark method
 
-- Status: Proposed
+- Status: Superseded by 0023
 - Date: 2026-10-12
 
 ## Context

@@ -1,4 +1,4 @@
-// MCPedia graph viewer, Cytoscape.js edition. Same page and features as main.ts, so the two
+// MCPdia graph viewer, Cytoscape.js edition. Same page and features as main.ts, so the two
 // libraries can be compared side by side. Open with ?renderer=cytoscape.
 // Cytoscape holds the data and renders it; neighbor groups are Cytoscape compound (parent) nodes.
 import cytoscape, { type Core, type ElementDefinition, type NodeSingular } from 'cytoscape';

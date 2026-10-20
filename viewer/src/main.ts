@@ -1,4 +1,4 @@
-// MCPedia graph viewer (prototype): Sigma.js v4 renders, graphology holds the data.
+// MCPdia graph viewer (prototype): Sigma.js v4 renders, graphology holds the data.
 // Everything the user sees besides the graph itself (search, panel, legend) is plain DOM.
 import { MultiDirectedGraph, UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
