@@ -12,4 +12,8 @@ providers:
     label: markdown
     config:
       side: markdown
+  - id: file://provider.mjs
+    label: markdown-onefile
+    config:
+      side: markdown-onefile
 tests: file://tests.mjs

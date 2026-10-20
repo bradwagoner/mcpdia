@@ -60,6 +60,7 @@ const STEPS = {
   // The step 5 miss behind ADR 0020, alone, to check the snippet fix.
   keyprefix: [read(questions.find((q) => q.needle === 'kst_live_'))],
 };
+STEPS.onefile = STEPS.step6;
 
 export default function tests() {
   const step = process.env.MCPEDIA_BENCH_STEP ?? 'check';

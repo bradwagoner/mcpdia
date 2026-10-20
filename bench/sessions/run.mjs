@@ -10,12 +10,14 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const STEPS = {
-  check: { sides: 'mcpedia|markdown', sessions: 4, estimate: 0, cap: 0, repeat: 1, dry: true },
+  check: { sides: 'mcpedia|markdown|markdown-onefile', sessions: 6, estimate: 0, cap: 0, repeat: 1, dry: true },
   step3: { sides: 'mcpedia', sessions: 1, estimate: 0.01, cap: 0.05, repeat: 1 },
   step4: { sides: 'markdown', sessions: 1, estimate: 0.01, cap: 0.05, repeat: 1 },
   step5: { sides: 'mcpedia|markdown', sessions: 6, estimate: 0.05, cap: 0.15, repeat: 1 },
   step6: { sides: 'mcpedia|markdown', sessions: 40, estimate: 0.3, cap: 0.75, repeat: 2 },
   keyprefix: { sides: 'mcpedia|markdown', sessions: 2, estimate: 0.01, cap: 0.05, repeat: 1 },
+  // The step 6 tests on the one-file side only, to set beside a step 6 run.
+  onefile: { sides: 'markdown-onefile', sessions: 20, estimate: 0.12, cap: 0.5, repeat: 2 },
 };
 
 const [name, ...flags] = process.argv.slice(2);

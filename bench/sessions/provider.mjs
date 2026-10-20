@@ -19,7 +19,8 @@ import { fileURLToPath } from 'node:url';
  * A promptfoo provider that runs one Claude session per test, through the
  * Claude Agent SDK, against a fresh copy of one side's memory:
  * `side: mcpedia` gets the MCPedia server and its database, `side: markdown`
- * gets CLAUDE.md plus topic files in its working folder.
+ * gets CLAUDE.md plus topic files in its working folder, and
+ * `side: markdown-onefile` gets the same facts as one CLAUDE.md.
  *
  * Paid sessions use the API key in bench.env, never a Claude login. Spending
  * stops at the run cap set by run.mjs. Everything a session produces is kept
@@ -41,7 +42,9 @@ const DRY = process.env.MCPEDIA_BENCH_DRY === '1';
 const RUN_CAP = Number(process.env.MCPEDIA_BENCH_CAP_USD ?? 0);
 const RUN_ID = process.env.MCPEDIA_BENCH_RUN ?? 'adhoc';
 
-// Shared by both providers in one promptfoo run, which is one process.
+const SIDES = ['mcpedia', 'markdown', 'markdown-onefile'];
+
+// Shared by all providers in one promptfoo run, which is one process.
 let spent = 0;
 let sessionNumber = 0;
 
@@ -49,7 +52,7 @@ export default class SessionProvider {
   constructor(options = {}) {
     this.config = { model: 'claude-haiku-5-5', maxTurns: 12, sessionCapUsd: 0.05, ...options.config };
     this.side = this.config.side;
-    if (this.side !== 'mcpedia' && this.side !== 'markdown') throw new Error('config.side must be mcpedia or markdown');
+    if (!SIDES.includes(this.side)) throw new Error(`config.side must be one of ${SIDES.join(', ')}`);
     this.label = options.label ?? this.side;
   }
 
@@ -63,15 +66,15 @@ export default class SessionProvider {
     const work = mkdtempSync(join(tmpdir(), `mcpedia-bench-${this.side}-`));
     try {
       const dbPath = join(work, 'mcpedia.db');
-      if (this.side === 'markdown') cpSync(join(FIXTURES, 'markdown'), work, { recursive: true });
-      else copyFileSync(join(FIXTURES, 'mcpedia.db'), dbPath);
+      if (this.side === 'mcpedia') copyFileSync(join(FIXTURES, 'mcpedia.db'), dbPath);
+      else cpSync(join(FIXTURES, this.side), work, { recursive: true });
 
       const session = DRY ? dryRun(vars) : await this.run(prompt, work, dbPath);
       if (session.error) return { error: session.error };
 
       let output = session.answer;
       if (vars.kind === 'write') {
-        const landed = this.side === 'markdown' ? markdownHas(work, vars.needle) : graphHas(dbPath, vars.needle);
+        const landed = this.side === 'mcpedia' ? graphHas(dbPath, vars.needle) : markdownHas(work, vars.needle);
         output += `\n[write check: ${landed ? 'landed' : 'missing'}]`;
       }
 
@@ -125,7 +128,7 @@ export default class SessionProvider {
         model: this.config.model,
         maxTurns: this.config.maxTurns,
         maxBudgetUsd: Math.min(this.config.sessionCapUsd, remaining),
-        // Isolation: no personal settings, no other MCP servers. The markdown side loads only its CLAUDE.md.
+        // Isolation: no personal settings, no other MCP servers. The markdown sides load only their CLAUDE.md.
         settingSources: mcpedia ? [] : ['project'],
         strictMcpConfig: true,
         mcpServers: mcpedia
@@ -184,7 +187,7 @@ function keep(work, name, side, kind, dbPath) {
   if (kind !== 'write') return;
   const dir = join(RESULTS, 'end-state', name);
   mkdirSync(dir, { recursive: true });
-  if (side === 'markdown') {
+  if (side !== 'mcpedia') {
     for (const f of readdirSync(work).filter((f) => f.endsWith('.md'))) copyFileSync(join(work, f), join(dir, f));
   } else {
     writeFileSync(join(dir, 'graph.jsonl'), exportGraph(dbPath));
