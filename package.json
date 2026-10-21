@@ -1,11 +1,11 @@
 {
-  "name": "@bradwagoner/mcpedia",
+  "name": "@bradwagoner/mcpdia",
   "version": "0.1.0-dev",
   "description": "Shared glossary and knowledge-graph memory for LLMs, over MCP.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "mcpedia": "dist/index.js"
+    "mcpdia": "dist/index.js"
   },
   "files": [
     "dist"

@@ -172,4 +172,20 @@ describe('MCP server', () => {
       'No results for "nothing here". Try fewer or different words.',
     );
   });
+
+  it('shows a searched word that sits past the snippet cut', async () => {
+    // The bench miss behind ADR 0020: the answer started 21 characters past the old cut.
+    await call('upsert', {
+      key: 'concept/api-key-scopes',
+      type: 'concept',
+      title: 'API key scopes',
+      summary: 'API keys carry a subset of their creator’s actions and stop working if the creator loses them.',
+      body:
+        "Workspace API keys are created by a user and choose scopes from that user's own actions; a key can never do more than its creator. The check runs against both: the key's scopes and the creator's current permissions. If the creator leaves the workspace or loses a role, their keys lose those actions too.\n\n" +
+        'Keys start with `kst_live_` or `kst_test_`. Only a hash is stored; the full key is shown once at creation.',
+    });
+    const found = (await call('search', { query: 'live API key prefix', level: 'snippet' })).text;
+    expect(found).toContain('Keys start with `kst_live_` or `kst_test_`.');
+    expect(found).toMatch(/ \(\+\d+ chars\)$/);
+  });
 });

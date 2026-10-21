@@ -137,6 +137,16 @@ describe('tool messages', () => {
     );
   });
 
+  it('lists partial matches after a short list of full matches', async () => {
+    await call('upsert', { key: 'concept/billing-roles', type: 'concept', title: 'Billing roles' });
+    expect(await call('search', { query: 'billing roles', level: 'title' })).toBe(
+      '1 result for "billing roles", then 2 partial matches; check them before relying on them:\n' +
+        '- concept/billing-roles [concept] Billing roles\n' +
+        '- concept/roles [concept] Roles (matched: roles)\n' +
+        '- concept/permissions [concept] Permission system (matched: roles)',
+    );
+  });
+
   it('says what an empty recent was filtered by', async () => {
     expect(await call('recent', { since: '2999-01-01', mine: true })).toBe(
       'Nothing recent (since 2999-01-01, yours only).',

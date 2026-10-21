@@ -11,6 +11,10 @@ export const RENDER_LEVELS = ['title', 'summary', 'snippet', 'full'] as const;
 export type RenderLevel = (typeof RENDER_LEVELS)[number];
 
 export const SNIPPET_LENGTH = 300;
+/** A searched word past the cut gets this much intro, then the rest of the length around the word (ADR 0020). */
+export const SNIPPET_INTRO = 100;
+/** The window around the word starts about this far before it, so the lead-in shows too. */
+const SNIPPET_LEAD = 80;
 
 export interface RenderExtras {
   edgeCount?: number;
@@ -18,6 +22,8 @@ export interface RenderExtras {
   supersededByKey?: string;
   /** Query words a partial search hit matched. */
   matched?: string[];
+  /** Search words. A snippet shows the text around the first one that would otherwise be cut off. */
+  terms?: string[];
 }
 
 /**
@@ -46,7 +52,9 @@ export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, e
   if (extras.matched?.length) markers.push(`matched: ${extras.matched.join(', ')}`);
   const lines = [titleLine(ctx, node) + (markers.length ? ` (${markers.join('; ')})` : '')];
   if (level === 'summary' || level === 'snippet') lines.push(`  ${summaryLine(node, extras)}`);
-  if (level === 'snippet' && node.body) lines.push(`  ${snippet(node.body)}`);
+  if (level === 'snippet' && node.body) {
+    lines.push(`  ${snippet(node.body, extras.terms, `${node.title} ${node.summary ?? ''}`)}`);
+  }
   return lines.join('\n');
 }
 
@@ -87,9 +95,71 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-function snippet(body: string): string {
+/**
+ * The first SNIPPET_LENGTH characters of the body. If a search word shows up only past that
+ * (not in the title, summary or the first part), the snippet is a short intro plus the text
+ * around that word instead, cut at whole words, with a count of what was left out.
+ */
+export function snippet(body: string, terms: string[] = [], shown = ''): string {
   const flat = body.replace(/\s+/g, ' ').trim();
-  return flat.length > SNIPPET_LENGTH ? `${flat.slice(0, SNIPPET_LENGTH)}…` : flat;
+  if (flat.length <= SNIPPET_LENGTH) return flat;
+  const head = flat.slice(0, SNIPPET_LENGTH);
+
+  const hidden = terms
+    .filter((t) => findWord(`${shown} ${head}`, t) < 0)
+    .map((t) => findWord(flat, t))
+    .filter((i) => i >= 0);
+  if (hidden.length === 0) return `${head}…`;
+
+  const at = Math.min(...hidden);
+  const introEnd = wordEndBefore(flat, SNIPPET_INTRO);
+  const from = Math.max(introEnd, at - SNIPPET_LEAD);
+  const room = SNIPPET_LENGTH - SNIPPET_INTRO;
+  // Inside a long word or URL, the nearest word boundary can lie past the match; cut mid-word instead.
+  let start = wordStartAfter(flat, from);
+  if (start > at) start = from;
+  let end = wordEndBefore(flat, start + room);
+  if (end <= at) end = Math.min(flat.length, start + room);
+  const left = flat.length - introEnd - (end - start);
+  return `${flat.slice(0, introEnd)} … ${flat.slice(start, end)}${end < flat.length ? ' …' : ''} (+${left} chars)`;
+}
+
+/**
+ * Where `term` shows up as a word start. The search index also matches stemmed forms
+ * ("permissions" finds "permission"), so if the term itself is missing, a few common
+ * endings are stripped and tried too. A light match, not the index's own stemmer.
+ */
+function findWord(text: string, term: string): number {
+  const at = wordIndex(text, term);
+  if (at >= 0) return at;
+  for (const ending of ['ing', 'ed', 'es', 's']) {
+    const stem = term.slice(0, -ending.length);
+    if (term.toLowerCase().endsWith(ending) && stem.length >= 3) {
+      const i = wordIndex(text, stem);
+      if (i >= 0) return i;
+    }
+  }
+  return -1;
+}
+
+/** Where a word starting with `term` begins: any case, `_` and punctuation break words. */
+function wordIndex(text: string, term: string): number {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.search(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}`, 'iu'));
+}
+
+/** `at`, moved back to the end of the word it falls in. */
+function wordEndBefore(text: string, at: number): number {
+  if (at >= text.length) return text.length;
+  const space = text.lastIndexOf(' ', at);
+  return space > 0 ? space : at;
+}
+
+/** `at`, moved forward to the start of the next word unless it already starts one. */
+function wordStartAfter(text: string, at: number): number {
+  if (at <= 0 || text[at - 1] === ' ') return at;
+  const space = text.indexOf(' ', at);
+  return space < 0 ? at : space + 1;
 }
 
 function day(iso: string): string {

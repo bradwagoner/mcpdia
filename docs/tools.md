@@ -6,7 +6,7 @@ What each MCP tool takes and returns. Responses are compact text (ADR 0011); ren
 |---|---|
 | `title` | `concept/permissions [concept] Permission system` |
 | `summary` | + next line: `  Roles grant actions; groups hold roles. · 4 links · verified 2026-09-30` |
-| `snippet` | + the first 300 characters of the body |
+| `snippet` | + the first 300 characters of the body. In `search`, if a searched word only appears past that, about 100 characters of intro, ` … `, the text around the word, and `(+N chars)` (ADR 0020) |
 | `full` | + whole body, tags, aliases, properties, version, updated date |
 
 Reads show active nodes. A superseded node fetched directly says so at every level: `(superseded by <key>)` on its title line, `Superseded by <key>` at `full`. `feedback` accepts superseded nodes; `verify` and `delete` skip them and name the replacement. Deleted nodes are left out of reads, and a tool asked for one by key says `<key> was deleted.` rather than not found. `get` and `search` take `all_status: true` to include deleted and superseded nodes, marked `(deleted)` or `(superseded by <key>)`; writing to a deleted key with `upsert` restores it (ADR 0017).
@@ -51,6 +51,15 @@ When no node matches every word, the results are partial matches and the header 
 ```
 No node matched all words of "permission billing". 1 partial match; check it before relying on it:
 - concept/permissions [concept] Permission system (matched: permission)
+```
+
+When fewer nodes match every word than the limit, partial matches fill the rest, after the full ones (ADR 0021):
+
+```
+1 result for "billing roles", then 2 partial matches; check them before relying on them:
+- concept/billing-roles [concept] Billing roles
+- concept/roles [concept] Roles (matched: roles)
+- concept/permissions [concept] Permission system (matched: roles)
 ```
 
 ## get

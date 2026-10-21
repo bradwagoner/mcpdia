@@ -6,7 +6,7 @@ import { SqliteStore } from '../src/store/sqlite/SqliteStore.js';
 import { type DemoNode, nodes } from './dataset/index.js';
 import { typeOf } from './dataset/types.js';
 
-/** An MCP client wired to a real MCPedia server, so the benchmark reads exactly what a model would. */
+/** An MCP client wired to a real MCPdia server, so the benchmark reads exactly what a model would. */
 export interface GraphSession {
   client: Client;
   /** Calls a tool and returns its text, throwing on a tool error. */
@@ -19,7 +19,7 @@ export async function openSession(dbPath = ':memory:'): Promise<GraphSession> {
   const server = createServer(store, soloContext());
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   await server.connect(serverSide);
-  const client = new Client({ name: 'mcpedia-bench', version: '0' });
+  const client = new Client({ name: 'mcpdia-bench', version: '0' });
   await client.connect(clientSide);
 
   async function call(name: string, args: Record<string, unknown>): Promise<string> {

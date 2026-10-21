@@ -1,8 +1,8 @@
 {
-  "name": "mcpedia-viewer",
+  "name": "mcpdia-viewer",
   "private": true,
   "version": "0.0.0",
-  "description": "Graph viewer for MCPedia, with two renderers: Sigma.js + graphology, and Cytoscape.js. Read-only.",
+  "description": "Graph viewer for MCPdia, with two renderers: Sigma.js + graphology, and Cytoscape.js. Read-only.",
   "type": "module",
   "scripts": {
     "start": "npm run build && node scripts/serve.mjs",

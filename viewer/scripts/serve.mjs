@@ -1,17 +1,21 @@
 // Serves the viewer and reads the graph live, so the page can follow changes the MCP server makes.
-// Usage (from viewer/): npm start  [-- path/to/mcpedia.db]
-//                        npm run dev [-- path/to/mcpedia.db]   also rebuilds on save and reloads the page
-// Listens on 127.0.0.1 only, answers only to local host names, and opens the database read-only.
+// Usage (from viewer/): npm start  [-- path/to/mcpdia.db]
+//                        npm run dev [-- path/to/mcpdia.db]   also rebuilds on save and reloads the page
+//                        add --lan to open it to other devices on your network
+// Listens on 127.0.0.1 only (or every interface with --lan), answers only to this machine's own
+// names, and opens the database read-only.
 import { createServer } from 'node:http';
 import { watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
+import { hostname, networkInterfaces } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dataVersion, defaultDbPath, openGraph, readGraph } from './read-graph.mjs';
 
 const args = process.argv.slice(2);
 const dbPath = args.find((a) => !a.startsWith('--')) ?? defaultDbPath();
 const devMode = args.includes('--watch');
+const lanMode = args.includes('--lan');
 const port = Number(process.env.PORT ?? 8000);
 const root = fileURLToPath(new URL('../www/', import.meta.url));
 const types = {
@@ -23,9 +27,17 @@ const types = {
 
 const db = openGraph(dbPath);
 
-// Only local names. A web page on another site can point its own host name at 127.0.0.1
+// Only this machine's own names. A web page on another site can point its own host name at 127.0.0.1
 // (DNS rebinding) and read the graph as if it were same-origin; checking Host stops that.
+// With --lan, this machine's network addresses and host name count as its own names too.
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const lanAddresses = Object.values(networkInterfaces())
+  .flat()
+  .filter((a) => a && !a.internal)
+  .map((a) => (a.family === 'IPv6' ? `[${a.address}]` : a.address));
+if (lanMode) {
+  for (const name of [...lanAddresses, hostname(), `${hostname()}.local`]) LOCAL_HOSTS.add(name.toLowerCase());
+}
 const isLocalHost = (host = '') => LOCAL_HOSTS.has(host.replace(/:\d+$/, '').toLowerCase());
 
 const server = createServer(async (req, res) => {
@@ -83,6 +95,10 @@ function send(res, status, type, body) {
   res.end(body);
 }
 
-server.listen(port, '127.0.0.1', () =>
-  console.log(`Viewer on http://localhost:${port} (live from ${dbPath}${devMode ? ', reloads on save' : ''})`),
-);
+server.listen(port, lanMode ? '0.0.0.0' : '127.0.0.1', () => {
+  console.log(`Viewer on http://localhost:${port} (live from ${dbPath}${devMode ? ', reloads on save' : ''})`);
+  if (!lanMode) return;
+  const urls = lanAddresses.filter((a) => !a.startsWith('[')).map((a) => `http://${a}:${port}`);
+  console.log(`On your network: ${urls.join(', ') || 'no network address found'}`);
+  console.log('Anyone on this network can read the graph (read-only, no login). Use --lan on trusted networks only.');
+});

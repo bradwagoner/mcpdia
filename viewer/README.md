@@ -1,6 +1,6 @@
 # Graph viewer
 
-An optional, read-only browser view of an MCPedia graph. It is separate from the MCP server: its own folder, its own dependencies, and nothing the server needs. Pick the renderer you like: [Sigma.js](https://www.sigmajs.org) v4 with [graphology](https://graphology.github.io), or [Cytoscape.js](https://js.cytoscape.org) (all MIT). Tracked in #26; the library choice is ADR 0014.
+An optional, read-only browser view of an MCPdia graph. It is separate from the MCP server: its own folder, its own dependencies, and nothing the server needs. Pick the renderer you like: [Sigma.js](https://www.sigmajs.org) v4 with [graphology](https://graphology.github.io), or [Cytoscape.js](https://js.cytoscape.org) (all MIT). Tracked in #26; the library choice is ADR 0014.
 
 - **Starts small:** the network view opens with the top-level nodes (not `part_of`, `comments_on` or `candidate_for` anything) and the pinned "start here" nodes, as circles in rings. The ones with the most underneath them are biggest and sit in the middle. A label moves inside its circle once it fits, and labels are clickable too. **Show all** shows the whole graph.
 - **Click a node:** its family tree gathers around it. Ancestors sit above it up to the top, siblings beside it (and each ancestor's siblings beside that ancestor), descendants below. Each layer is grouped by edge kind and sorted by type, and other neighbors sit in groups on the far sides, one per type and relationship. Clicking a node that is already in the tree reshapes it in place. Clicking empty space puts everything back.
@@ -22,14 +22,16 @@ Both renderers have the same features. Sigma.js (`src/main.ts`) is the default: 
 ```
 cd viewer
 npm install
-npm start                   # http://localhost:8000, live from ~/.mcpedia/mcpedia.db (or $MCPEDIA_DB)
+npm start                   # http://localhost:8000, live from ~/.mcpdia/mcpdia.db (or $MCPDIA_DB)
 ```
 
 `npm start` opens the database read-only and only listens on localhost. To point it at another graph, run `npm start -- path/to/graph.db`.
 
+Want it on your phone or another computer? `npm start -- --lan` (or `npm run dev -- --lan`) also listens on your local network and prints the address to open. There's no login, so anyone on that network can read the graph; use it on networks you trust. On Windows, allow Node through the firewall for **Private networks** when asked.
+
 Working on the viewer itself? `npm run dev` does the same as `npm start`, and also rebuilds on save and reloads the page, keeping your view.
 
-For a snapshot instead, `npm run export` writes `www/data/mcpedia.json`; open it with `?data=data/mcpedia.json`.
+For a snapshot instead, `npm run export` writes `www/data/mcpdia.json`; open it with `?data=data/mcpdia.json`.
 
 For a scale test, `npm run generate -- 10000` writes fake data; open `http://localhost:8000/?data=data/generated-10000.json`.
 

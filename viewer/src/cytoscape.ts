@@ -1,4 +1,4 @@
-// MCPedia graph viewer, Cytoscape.js edition. Same page and features as main.ts, so the two
+// MCPdia graph viewer, Cytoscape.js edition. Same page and features as main.ts, so the two
 // libraries can be compared side by side. Open with ?renderer=cytoscape.
 // Cytoscape holds the data and renders it; neighbor groups are Cytoscape compound (parent) nodes.
 import cytoscape, { type Core, type ElementDefinition, type NodeSingular } from 'cytoscape';
@@ -59,7 +59,7 @@ async function fetchGraph(): Promise<ExportedGraph> {
   const r = await fetch(dataUrl, { cache: 'no-store' });
   if (r.ok) return r.json();
   if (!fileParam && dataUrl === 'api/graph') {
-    dataUrl = 'data/mcpedia.json';
+    dataUrl = 'data/mcpdia.json';
     return fetchGraph();
   }
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
@@ -855,7 +855,7 @@ interface SavedState {
   movable?: boolean;
   camera: { zoom: number; pan: Point };
 }
-const stateKey = () => `mcpedia-viewer:v2:cytoscape:${fileParam ?? 'live'}`;
+const stateKey = () => `mcpdia-viewer:v2:cytoscape:${fileParam ?? 'live'}`;
 function loadState(): SavedState | null {
   try {
     return JSON.parse(localStorage.getItem(stateKey()) ?? 'null');

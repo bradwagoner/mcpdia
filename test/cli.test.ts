@@ -26,7 +26,7 @@ describe('pickCommand', () => {
 
 describe('writeLinesAtomically', () => {
   it('writes every line, then moves the file into place', async () => {
-    const path = join(mkdtempSync(join(tmpdir(), 'mcpedia-cli-')), 'out.jsonl');
+    const path = join(mkdtempSync(join(tmpdir(), 'mcpdia-cli-')), 'out.jsonl');
     const result = await writeLinesAtomically(path, async (write) => {
       await write('{"a":1}');
       await write('{"b":2}');
@@ -37,7 +37,7 @@ describe('writeLinesAtomically', () => {
   });
 
   it('leaves the target untouched and cleans up when writing fails', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mcpedia-cli-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mcpdia-cli-'));
     const path = join(dir, 'out.jsonl');
     writeFileSync(path, 'previous export\n');
     const failing = writeLinesAtomically(path, async (write) => {
@@ -50,7 +50,7 @@ describe('writeLinesAtomically', () => {
   });
 
   it('creates no file when the export fails before writing', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mcpedia-cli-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mcpdia-cli-'));
     const path = join(dir, 'out.jsonl');
     await expect(
       writeLinesAtomically(path, async () => Promise.reject(new UserError('Unknown namespace: x.'))),
@@ -61,7 +61,7 @@ describe('writeLinesAtomically', () => {
 });
 
 describe('assertNotDatabase', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mcpedia-db-'));
+  const dir = mkdtempSync(join(tmpdir(), 'mcpdia-db-'));
   const db = join(dir, 'graph.db');
   writeFileSync(db, '');
 
@@ -80,7 +80,7 @@ describe('assertNotDatabase', () => {
 
   it('refuses the database through a symlinked folder', () => {
     if (process.platform === 'win32') return; // Symlinks need extra rights on Windows.
-    const link = join(mkdtempSync(join(tmpdir(), 'mcpedia-link-')), 'here');
+    const link = join(mkdtempSync(join(tmpdir(), 'mcpdia-link-')), 'here');
     symlinkSync(dir, link);
     expect(() => assertNotDatabase(join(link, 'graph.db'), db)).toThrow(UserError);
   });

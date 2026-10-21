@@ -92,16 +92,16 @@ async function main(): Promise<void> {
   );
   if (!counter.exact) lines.push('**Estimate only. Do not publish these numbers.**', '');
   lines.push(
-    `**Headline:** answering one question in a fresh session, MCPedia used a median **${pct(headline.saving)} fewer tokens** ` +
-      `than reading the right markdown topic file (${pct(headline.savingNoOverhead)} before MCPedia's fixed session cost).`,
+    `**Headline:** answering one question in a fresh session, MCPdia used a median **${pct(headline.saving)} fewer tokens** ` +
+      `than reading the right markdown topic file (${pct(headline.savingNoOverhead)} before MCPdia's fixed session cost).`,
     '',
   );
   lines.push(
-    '| Strategy | Answers found | Median tokens per question | Total tokens | MCPedia saving (median, with session cost) | Without session cost |',
+    '| Strategy | Answers found | Median tokens per question | Total tokens | MCPdia saving (median, with session cost) | Without session cost |',
   );
   lines.push('|---|---|---|---|---|---|');
   lines.push(
-    `| MCPedia: search, then get | ${found(rows.map((r) => r.graph))} | ${median(graphPer)} + ${overhead} session | ${sum(graphPer)} + ${overhead} | | |`,
+    `| MCPdia: search, then get | ${found(rows.map((r) => r.graph))} | ${median(graphPer)} + ${overhead} session | ${sum(graphPer)} + ${overhead} | | |`,
   );
   for (const s of summary) {
     lines.push(
@@ -110,11 +110,11 @@ async function main(): Promise<void> {
   }
   lines.push(
     '',
-    `MCPedia's fixed session cost: ${overhead} tokens (tool definitions, server instructions and one \`orient\` call).`,
+    `MCPdia's fixed session cost: ${overhead} tokens (tool definitions, server instructions and one \`orient\` call).`,
     '',
   );
   lines.push('## Per question', '');
-  lines.push('| Question | MCPedia | Found | Index + file | Grep + file | Whole file |');
+  lines.push('| Question | MCPdia | Found | Index + file | Grep + file | Whole file |');
   lines.push('|---|---|---|---|---|---|');
   for (const r of rows) {
     const b = r.baselines;

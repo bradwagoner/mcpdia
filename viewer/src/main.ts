@@ -1,4 +1,4 @@
-// MCPedia graph viewer (prototype): Sigma.js v4 renders, graphology holds the data.
+// MCPdia graph viewer (prototype): Sigma.js v4 renders, graphology holds the data.
 // Everything the user sees besides the graph itself (search, panel, legend) is plain DOM.
 import { MultiDirectedGraph, UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
@@ -63,7 +63,7 @@ async function fetchGraph(): Promise<ExportedGraph> {
   if (r.ok) return r.json();
   if (!fileParam && dataUrl === 'api/graph') {
     // Not served by `npm start`: fall back to the exported file.
-    dataUrl = 'data/mcpedia.json';
+    dataUrl = 'data/mcpdia.json';
     return fetchGraph();
   }
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
@@ -1095,7 +1095,7 @@ interface SavedState {
   camera: { x: number; y: number; ratio: number; angle: number };
 }
 function stateKey() {
-  return `mcpedia-viewer:v2:${fileParam ?? 'live'}`;
+  return `mcpdia-viewer:v2:${fileParam ?? 'live'}`;
 }
 function loadState(): SavedState | null {
   try {

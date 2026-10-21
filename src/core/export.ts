@@ -7,7 +7,7 @@ export const EXPORT_FORMAT_VERSION = 1;
 
 export interface ExportHeader {
   kind: 'header';
-  format: 'mcpedia-jsonl';
+  format: 'mcpdia-jsonl';
   version: number;
   exportedAt: string;
   namespaces: string[];
@@ -48,7 +48,7 @@ export async function exportJsonl(
 
   const header: ExportHeader = {
     kind: 'header',
-    format: 'mcpedia-jsonl',
+    format: 'mcpdia-jsonl',
     version: EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     namespaces,
