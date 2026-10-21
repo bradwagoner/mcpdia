@@ -34,7 +34,7 @@ describe('exportJsonl', () => {
     const lines = await exported();
     expect(lines[0]).toMatchObject({
       kind: 'header',
-      format: 'mcpedia-jsonl',
+      format: 'mcpdia-jsonl',
       version: 1,
       statuses: ['active'],
       nodes: 2,

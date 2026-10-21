@@ -1,9 +1,9 @@
-// Reads a whole MCPedia graph into the JSON shape the viewer uses. Shared by export-graph and serve.
+// Reads a whole MCPdia graph into the JSON shape the viewer uses. Shared by export-graph and serve.
 import Database from 'better-sqlite3';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-export const defaultDbPath = () => process.env.MCPEDIA_DB ?? join(homedir(), '.mcpedia', 'mcpedia.db');
+export const defaultDbPath = () => process.env.MCPDIA_DB ?? join(homedir(), '.mcpdia', 'mcpdia.db');
 
 // Read-only: the viewer never writes to the graph.
 export const openGraph = (dbPath) => new Database(dbPath, { readonly: true, fileMustExist: true });

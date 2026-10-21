@@ -10,12 +10,12 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const STEPS = {
-  check: { sides: 'mcpedia|markdown|markdown-onefile', sessions: 6, estimate: 0, cap: 0, repeat: 1, dry: true },
-  step3: { sides: 'mcpedia', sessions: 1, estimate: 0.01, cap: 0.05, repeat: 1 },
+  check: { sides: 'mcpdia|markdown|markdown-onefile', sessions: 6, estimate: 0, cap: 0, repeat: 1, dry: true },
+  step3: { sides: 'mcpdia', sessions: 1, estimate: 0.01, cap: 0.05, repeat: 1 },
   step4: { sides: 'markdown', sessions: 1, estimate: 0.01, cap: 0.05, repeat: 1 },
-  step5: { sides: 'mcpedia|markdown', sessions: 6, estimate: 0.05, cap: 0.15, repeat: 1 },
-  step6: { sides: 'mcpedia|markdown', sessions: 40, estimate: 0.3, cap: 0.75, repeat: 2 },
-  keyprefix: { sides: 'mcpedia|markdown', sessions: 2, estimate: 0.01, cap: 0.05, repeat: 1 },
+  step5: { sides: 'mcpdia|markdown', sessions: 6, estimate: 0.05, cap: 0.15, repeat: 1 },
+  step6: { sides: 'mcpdia|markdown', sessions: 40, estimate: 0.3, cap: 0.75, repeat: 2 },
+  keyprefix: { sides: 'mcpdia|markdown', sessions: 2, estimate: 0.01, cap: 0.05, repeat: 1 },
   // The step 6 tests on the one-file side only, to set beside a step 6 run.
   onefile: { sides: 'markdown-onefile', sessions: 20, estimate: 0.12, cap: 0.5, repeat: 2 },
 };
@@ -63,10 +63,10 @@ const result = spawnSync(
     stdio: 'inherit',
     env: {
       ...process.env,
-      MCPEDIA_BENCH_STEP: name,
-      MCPEDIA_BENCH_RUN: runId,
-      MCPEDIA_BENCH_CAP_USD: String(step.cap),
-      MCPEDIA_BENCH_DRY: step.dry ? '1' : '0',
+      MCPDIA_BENCH_STEP: name,
+      MCPDIA_BENCH_RUN: runId,
+      MCPDIA_BENCH_CAP_USD: String(step.cap),
+      MCPDIA_BENCH_DRY: step.dry ? '1' : '0',
       PROMPTFOO_DISABLE_TELEMETRY: '1',
       PROMPTFOO_DISABLE_UPDATE: '1',
     },

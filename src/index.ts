@@ -11,13 +11,13 @@ import { openMetricsLog } from './metrics.js';
 import { createServer } from './server.js';
 import { SqliteStore } from './store/sqlite/SqliteStore.js';
 
-const dbPath = process.env.MCPEDIA_DB ?? join(homedir(), '.mcpedia', 'mcpedia.db');
+const dbPath = process.env.MCPDIA_DB ?? join(homedir(), '.mcpdia', 'mcpdia.db');
 
 const EXPORT_USAGE = `Usage: mcpdia export [--namespace ns]... [--all-status] [--out file]
 
 Writes the graph as JSON Lines to stdout, or to --out.
 Exports active nodes only; --all-status adds superseded and deleted nodes.
-Reads ${dbPath} (set MCPEDIA_DB to use another database).`;
+Reads ${dbPath} (set MCPDIA_DB to use another database).`;
 
 /** `mcpdia export [--namespace ns]... [--all-status] [--out file]`: JSONL to a file or stdout. */
 async function runExport(args: string[]): Promise<void> {
@@ -61,7 +61,7 @@ async function runExport(args: string[]): Promise<void> {
 async function main(): Promise<void> {
   const store = new SqliteStore(dbPath);
   const metrics =
-    process.env.MCPEDIA_METRICS === '1' ? openMetricsLog(join(dirname(dbPath), 'mcpedia-metrics.jsonl')) : undefined;
+    process.env.MCPDIA_METRICS === '1' ? openMetricsLog(join(dirname(dbPath), 'mcpdia-metrics.jsonl')) : undefined;
   const server = createServer(store, soloContext(), { metrics });
 
   const shutdown = async () => {

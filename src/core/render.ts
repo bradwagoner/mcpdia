@@ -106,19 +106,43 @@ export function snippet(body: string, terms: string[] = [], shown = ''): string 
   const head = flat.slice(0, SNIPPET_LENGTH);
 
   const hidden = terms
-    .filter((t) => wordIndex(`${shown} ${head}`, t) < 0)
-    .map((t) => wordIndex(flat, t))
+    .filter((t) => findWord(`${shown} ${head}`, t) < 0)
+    .map((t) => findWord(flat, t))
     .filter((i) => i >= 0);
   if (hidden.length === 0) return `${head}…`;
 
+  const at = Math.min(...hidden);
   const introEnd = wordEndBefore(flat, SNIPPET_INTRO);
-  const start = wordStartAfter(flat, Math.max(introEnd, Math.min(...hidden) - SNIPPET_LEAD));
-  const end = wordEndBefore(flat, start + SNIPPET_LENGTH - SNIPPET_INTRO);
+  const from = Math.max(introEnd, at - SNIPPET_LEAD);
+  const room = SNIPPET_LENGTH - SNIPPET_INTRO;
+  // Inside a long word or URL, the nearest word boundary can lie past the match; cut mid-word instead.
+  let start = wordStartAfter(flat, from);
+  if (start > at) start = from;
+  let end = wordEndBefore(flat, start + room);
+  if (end <= at) end = Math.min(flat.length, start + room);
   const left = flat.length - introEnd - (end - start);
   return `${flat.slice(0, introEnd)} … ${flat.slice(start, end)}${end < flat.length ? ' …' : ''} (+${left} chars)`;
 }
 
-/** Where a word starting with `term` begins, matching like the search index: any case, `_` and punctuation break words. */
+/**
+ * Where `term` shows up as a word start. The search index also matches stemmed forms
+ * ("permissions" finds "permission"), so if the term itself is missing, a few common
+ * endings are stripped and tried too. A light match, not the index's own stemmer.
+ */
+function findWord(text: string, term: string): number {
+  const at = wordIndex(text, term);
+  if (at >= 0) return at;
+  for (const ending of ['ing', 'ed', 'es', 's']) {
+    const stem = term.slice(0, -ending.length);
+    if (term.toLowerCase().endsWith(ending) && stem.length >= 3) {
+      const i = wordIndex(text, stem);
+      if (i >= 0) return i;
+    }
+  }
+  return -1;
+}
+
+/** Where a word starting with `term` begins: any case, `_` and punctuation break words. */
 function wordIndex(text: string, term: string): number {
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return text.search(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}`, 'iu'));

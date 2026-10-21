@@ -53,7 +53,7 @@ export async function anthropicCounter(model: string, cachePath: string): Promis
 
 /** Exact when Anthropic credentials are available, otherwise the estimate. */
 export async function pickCounter(model: string, cachePath: string): Promise<TokenCounter> {
-  if (process.env.MCPEDIA_BENCH_ESTIMATE === '1') return estimateCounter();
+  if (process.env.MCPDIA_BENCH_ESTIMATE === '1') return estimateCounter();
   try {
     const counter = await anthropicCounter(model, cachePath);
     return counter;

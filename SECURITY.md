@@ -21,7 +21,7 @@ The server's MCP instructions, which clients load at the start of every session,
 In v0.1 MCPdia runs in solo mode (ADR 0006):
 
 - The server speaks MCP over **stdio**. It opens no network port and makes no outbound requests.
-- The graph is a **SQLite file on your machine**, `~/.mcpedia/mcpedia.db` by default or the path in `MCPEDIA_DB`. Anyone who can read that file can read the graph, and anyone who can write it can change it. Protect it like any other file in your home directory.
+- The graph is a **SQLite file on your machine**, `~/.mcpdia/mcpdia.db` by default or the path in `MCPDIA_DB`. Anyone who can read that file can read the graph, and anyone who can write it can change it. Protect it like any other file in your home directory.
 - There is **no authentication**. The trust boundary is your user account and the MCP clients you connect. Every connected client reads and writes the same graph.
 - `mcpdia export` writes the whole graph as JSONL. Treat the export file with the same care as the database. It refuses to write over the database itself.
 - The optional viewer (`viewer/`) opens the database read-only and serves it on `localhost` only. It answers only to local host names, so a web page can't reach it through DNS rebinding. With `--lan` it also listens on your local network, still read-only, and anyone on that network can read the graph, so use it only on networks you trust.

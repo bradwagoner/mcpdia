@@ -40,4 +40,4 @@ Out of scope for v0.1: auth, Postgres, Docker/HTTP, embeddings, import/merge. Th
 - If something in these docs seems wrong or unclear, say so and propose a change rather than silently deviating.
 
 ## Naming
-The project is **MCPdia**, short for Model Context Protocol: Distilled, Indexed Answers (ADR 0022, which replaced the earlier name MCPedia). The npm package is `@bradwagoner/mcpdia`. Runtime names (`MCPEDIA_*` variables, `~/.mcpedia`) keep the old spelling until a later decision.
+The project is **MCPdia**, short for Model Context Protocol: Distilled, Indexed Answers (ADR 0022, which replaced the earlier name MCPedia). The npm package is `@bradwagoner/mcpdia`. Runtime names use it too: `MCPDIA_DB`, `MCPDIA_METRICS`, `~/.mcpdia/mcpdia.db`.
