@@ -1,7 +1,7 @@
 /**
  * The demo dataset: knowledge about Kestrel, a fictional invoicing and
  * expense app for small agencies. Written once as nodes, rendered both into
- * an MCPedia graph and into markdown memory files (ADR 0013).
+ * an MCPdia graph and into markdown memory files (ADR 0013).
  */
 export interface DemoNode {
   /** `<type>/<slug>`; the type is the part before the slash. */
