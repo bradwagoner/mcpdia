@@ -1,0 +1,1164 @@
+{
+  "counter": "estimate (characters / 4)",
+  "exactTokens": false,
+  "platform": "win32",
+  "node": "v24.19.0",
+  "retrieval": {
+    "asWritten": {
+      "rows": [
+        {
+          "question": "How long do cached permissions live in Redis?",
+          "answer": "concept/permission-cache",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "Why was the permission cache TTL not set to 60 seconds?",
+          "answer": "decision/permission-cache-ttl",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Can roles be assigned directly to a user?",
+          "answer": "concept/permission-system",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How many custom roles can a workspace have?",
+          "answer": "concept/roles",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long does a new Owner have to accept an ownership transfer?",
+          "answer": "concept/builtin-roles",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How deep can groups be nested?",
+          "answer": "concept/groups",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What HTTP status does a failed permission check return?",
+          "answer": "concept/permission-check",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What is the default approval limit?",
+          "answer": "concept/approval-limit",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long are audit log entries kept?",
+          "answer": "concept/audit-log",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long do SSO sessions last?",
+          "answer": "concept/sso",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "What prefix do live API keys start with?",
+          "answer": "concept/api-key-scopes",
+          "rank": 3,
+          "full": false
+        },
+        {
+          "question": "How much does the Business plan cost per member?",
+          "answer": "concept/plans",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Are Viewers billed as active members?",
+          "answer": "concept/active-member",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "Which Stripe API version is pinned?",
+          "answer": "concept/stripe-integration",
+          "rank": 2,
+          "full": true
+        },
+        {
+          "question": "How many times is a failed webhook retried?",
+          "answer": "concept/webhook-processing",
+          "rank": 2,
+          "full": true
+        },
+        {
+          "question": "What happens to a workspace when all subscription payment retries fail?",
+          "answer": "concept/dunning",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "When are invoice numbers assigned?",
+          "answer": "concept/invoice-numbering",
+          "rank": 2,
+          "full": true
+        },
+        {
+          "question": "How is tax rounded on invoices?",
+          "answer": "concept/tax-calculation",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "Where do currency conversion rates for reports come from?",
+          "answer": "concept/currencies",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What confidence does receipt OCR need to prefill fields?",
+          "answer": "concept/receipt-ocr",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What are the API rate limits on the Team plan?",
+          "answer": "concept/rate-limits",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "What is the maximum page size for API list endpoints?",
+          "answer": "concept/pagination",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "When was API v1 sunset?",
+          "answer": "concept/api-versioning",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long are idempotency key responses stored?",
+          "answer": "concept/idempotency-keys",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How are outgoing webhook payloads signed?",
+          "answer": "concept/outgoing-webhooks",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "Which AWS region hosts EU workspaces?",
+          "answer": "concept/regions",
+          "rank": 3,
+          "full": false
+        },
+        {
+          "question": "How long is point-in-time recovery retained for the database?",
+          "answer": "concept/postgres",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "When can locking database migrations run?",
+          "answer": "concept/migrations-policy",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long is the canary during production deploys?",
+          "answer": "concept/deploys",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "When are deploys frozen?",
+          "answer": "concept/deploys",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "What is the API availability SLO?",
+          "answer": "concept/slos",
+          "rank": 2,
+          "full": false
+        },
+        {
+          "question": "Which email provider sends invoice emails?",
+          "answer": "concept/email-delivery",
+          "rank": 4,
+          "full": false
+        },
+        {
+          "question": "How often do database passwords rotate?",
+          "answer": "concept/secrets",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How is tenant isolation enforced in Postgres?",
+          "answer": "concept/tenant-isolation",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How long does a workspace data export link stay valid?",
+          "answer": "concept/data-export",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Are invoice PDFs re-rendered when the template changes?",
+          "answer": "concept/invoice-pdf",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "Why did we choose Textract over Google Document AI?",
+          "answer": "decision/textract-for-ocr",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How many workers can the queue backlog runbook scale to?",
+          "answer": "runbook/queue-backlog",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How often is the status page updated during an incident?",
+          "answer": "runbook/incident-process",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Which changes need two code review approvals?",
+          "answer": "concept/code-review",
+          "rank": 1,
+          "full": true
+        }
+      ],
+      "score": {
+        "n": 40,
+        "hit1": 33,
+        "hit3": 39,
+        "mrr": 0.8979166666666668,
+        "missed": [
+          "Which email provider sends invoice emails?"
+        ]
+      }
+    },
+    "reworded": {
+      "rows": [
+        {
+          "question": "When does a cached permission expire?",
+          "answer": "concept/permission-cache",
+          "rank": 2,
+          "full": false
+        },
+        {
+          "question": "What was wrong with a one-minute TTL for the permission cache?",
+          "answer": "decision/permission-cache-ttl",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Do users get roles directly, or only through groups?",
+          "answer": "concept/permission-system",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Is there a limit on custom roles per workspace?",
+          "answer": "concept/roles",
+          "rank": 2,
+          "full": false
+        },
+        {
+          "question": "How much time does someone get to take over as workspace Owner?",
+          "answer": "concept/builtin-roles",
+          "rank": 3,
+          "full": false
+        },
+        {
+          "question": "Can a group contain another group, and how far?",
+          "answer": "concept/groups",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What does the API respond with when a user lacks permission?",
+          "answer": "concept/permission-check",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How big can an expense be before it needs approval by default?",
+          "answer": "concept/approval-limit",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What is the retention period for the audit log?",
+          "answer": "concept/audit-log",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "When does a single sign-on login expire?",
+          "answer": "concept/sso",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How can you tell a production API key from its prefix?",
+          "answer": "concept/api-key-scopes",
+          "rank": 4,
+          "full": false
+        },
+        {
+          "question": "What is the per-seat price of the Business tier?",
+          "answer": "concept/plans",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Do Viewer seats count toward the bill?",
+          "answer": "concept/active-member",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What version of the Stripe API do we use?",
+          "answer": "concept/stripe-integration",
+          "rank": 2,
+          "full": true
+        },
+        {
+          "question": "How often do we retry a webhook that failed?",
+          "answer": "concept/webhook-processing",
+          "rank": 4,
+          "full": false
+        },
+        {
+          "question": "What does dunning do to a workspace after the last failed charge?",
+          "answer": "concept/dunning",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "At what point does an invoice get its number?",
+          "answer": "concept/invoice-numbering",
+          "rank": 2,
+          "full": false
+        },
+        {
+          "question": "Which rounding mode does invoice tax use?",
+          "answer": "concept/tax-calculation",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What is the source of exchange rates in reports?",
+          "answer": "concept/currencies",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How confident must OCR be before it fills in receipt fields?",
+          "answer": "concept/receipt-ocr",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How many requests per minute does a Team plan workspace get?",
+          "answer": "concept/rate-limits",
+          "rank": 1,
+          "full": true
+        },
+        {
+          "question": "How many items can one page of an API list return?",
+          "answer": "concept/pagination",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What date did the first API version stop working?",
+          "answer": "concept/api-versioning",
+          "rank": 3,
+          "full": false
+        },
+        {
+          "question": "How long do we keep the response for an idempotency key?",
+          "answer": "concept/idempotency-keys",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How do receivers verify our webhook signatures?",
+          "answer": "concept/outgoing-webhooks",
+          "rank": 2,
+          "full": false
+        },
+        {
+          "question": "Where is data for European customers hosted?",
+          "answer": "concept/regions",
+          "rank": null,
+          "full": false
+        },
+        {
+          "question": "How far back can the Postgres database be restored?",
+          "answer": "concept/postgres",
+          "rank": 6,
+          "full": false
+        },
+        {
+          "question": "During which hours may migrations that lock tables be applied?",
+          "answer": "concept/migrations-policy",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How long does a canary run before a full rollout?",
+          "answer": "concept/deploys",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Is there a weekly deploy freeze?",
+          "answer": "concept/deploys",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What uptime target does the public API have?",
+          "answer": "concept/slos",
+          "rank": null,
+          "full": false
+        },
+        {
+          "question": "Which service delivers invoice email?",
+          "answer": "concept/email-delivery",
+          "rank": 5,
+          "full": false
+        },
+        {
+          "question": "What is the rotation schedule for database credentials?",
+          "answer": "concept/secrets",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How do we keep one tenant from reading another tenant rows?",
+          "answer": "concept/tenant-isolation",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How long can a data export download link be used?",
+          "answer": "concept/data-export",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "If the invoice template changes, do old PDFs change too?",
+          "answer": "concept/invoice-pdf",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "Why was Textract picked for receipt OCR?",
+          "answer": "decision/textract-for-ocr",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "What is the worker ceiling when scaling for a queue backlog?",
+          "answer": "runbook/queue-backlog",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "How frequently should the status page be updated in an incident?",
+          "answer": "runbook/incident-process",
+          "rank": 1,
+          "full": false
+        },
+        {
+          "question": "When are two reviewers required on a pull request?",
+          "answer": "concept/code-review",
+          "rank": 1,
+          "full": false
+        }
+      ],
+      "score": {
+        "n": 40,
+        "hit1": 27,
+        "hit3": 34,
+        "mrr": 0.7758333333333334,
+        "missed": [
+          "How can you tell a production API key from its prefix?",
+          "How often do we retry a webhook that failed?",
+          "Where is data for European customers hosted?",
+          "How far back can the Postgres database be restored?",
+          "What uptime target does the public API have?",
+          "Which service delivers invoice email?"
+        ]
+      }
+    }
+  },
+  "noMatch": [
+    {
+      "question": "Which Kubernetes version do the API servers run?",
+      "ok": true,
+      "header": "No node matched all words of \"kubernetes version api servers run\". 10 of 43 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "What GraphQL schema does the public API expose?",
+      "ok": true,
+      "header": "No node matched all words of \"graphql schema public api expose\". 10 of 32 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "How much does the Kafka cluster for billing events cost?",
+      "ok": true,
+      "header": "No node matched all words of \"kafka cluster billing events cost\". 10 of 27 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "Which Terraform module creates the Postgres database?",
+      "ok": true,
+      "header": "No node matched all words of \"terraform module creates postgres database\". 10 of 25 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "What is the parking policy at the office?",
+      "ok": true,
+      "header": "No node matched all words of \"parking policy office\". 3 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "How many vacation days does the team get?",
+      "ok": true,
+      "header": "No node matched all words of \"vacation days team get\". 10 of 25 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "Which Python version do the background jobs use?",
+      "ok": true,
+      "header": "No node matched all words of \"python version background jobs use\". 10 of 35 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "When is the SOC 2 audit for the workspace data?",
+      "ok": true,
+      "header": "No node matched all words of \"soc 2 audit workspace data\". 10 of 54 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "What font does the invoice PDF use for the logo?",
+      "ok": true,
+      "header": "No node matched all words of \"font invoice pdf use logo\". 10 of 51 partial matches; check them before relying on them:"
+    },
+    {
+      "question": "Who orders lunch for the incident review?",
+      "ok": true,
+      "header": "No node matched all words of \"orders lunch incident review\". 9 partial matches; check them before relying on them:"
+    }
+  ],
+  "levels": [
+    {
+      "level": "title",
+      "search": 131,
+      "get": 12
+    },
+    {
+      "level": "summary",
+      "search": 261,
+      "get": 37
+    },
+    {
+      "level": "snippet",
+      "search": 628,
+      "get": 113
+    },
+    {
+      "level": "full",
+      "search": 834,
+      "get": 158
+    }
+  ],
+  "lifecycle": [
+    {
+      "name": "concept/permission-cache: search leaves the old node out",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: search ranks concept/permission-cache-2 where the old node was",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: search with all_status marks it superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: get at title says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: get at summary says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: get at snippet says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache: get at full says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/permission-cache-2: get has the new value \"10 minutes\"",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: search leaves the old node out",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: search ranks concept/single-sign where the old node was",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: search with all_status marks it superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: get at title says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: get at summary says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: get at snippet says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/sso: get at full says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/single-sign: get has the new value \"8 hours\"",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: search leaves the old node out",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: search ranks concept/api-rate-limits where the old node was",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: search with all_status marks it superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: get at title says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: get at summary says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: get at snippet says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/rate-limits: get at full says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/api-rate-limits: get has the new value \"240 requests per minute\"",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: search leaves the old node out",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: search ranks concept/deploys-2 where the old node was",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: search with all_status marks it superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: get at title says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: get at summary says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: get at snippet says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys: get at full says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/deploys-2: get has the new value \"30 minutes\"",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: search leaves the old node out",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: search ranks concept/email-delivery-2 where the old node was",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: search with all_status marks it superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: get at title says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: get at summary says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: get at snippet says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery: get at full says superseded",
+      "ok": true
+    },
+    {
+      "name": "concept/email-delivery-2: get has the new value \"Amazon SES\"",
+      "ok": true
+    },
+    {
+      "name": "concept/audit-log: search leaves the deleted node out",
+      "ok": true
+    },
+    {
+      "name": "concept/audit-log: get says it was deleted",
+      "ok": true
+    },
+    {
+      "name": "concept/pagination: search leaves the deleted node out",
+      "ok": true
+    },
+    {
+      "name": "concept/pagination: get says it was deleted",
+      "ok": true
+    },
+    {
+      "name": "concept/secrets: search leaves the deleted node out",
+      "ok": true
+    },
+    {
+      "name": "concept/secrets: get says it was deleted",
+      "ok": true
+    },
+    {
+      "name": "concept/plans: search flags it",
+      "ok": true
+    },
+    {
+      "name": "concept/plans: get flags it",
+      "ok": true
+    },
+    {
+      "name": "concept/regions: search flags it",
+      "ok": true
+    },
+    {
+      "name": "concept/regions: get flags it",
+      "ok": true
+    },
+    {
+      "name": "concept/dunning: search flags it",
+      "ok": true
+    },
+    {
+      "name": "concept/dunning: get flags it",
+      "ok": true
+    }
+  ],
+  "scale": [
+    {
+      "distractors": 0,
+      "nodes": 82,
+      "dbBytes": 479232,
+      "loadSeconds": 0.1,
+      "searchMs": {
+        "p50": 2.03,
+        "p95": 3.29
+      },
+      "getMs": {
+        "p50": 0.11,
+        "p95": 0.19
+      },
+      "otherTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 33,
+          "hit3": 39,
+          "mrr": 0.8979166666666668,
+          "missed": [
+            "Which email provider sends invoice emails?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 27,
+          "hit3": 34,
+          "mrr": 0.7758333333333334,
+          "missed": [
+            "How can you tell a production API key from its prefix?",
+            "How often do we retry a webhook that failed?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "What uptime target does the public API have?",
+            "Which service delivers invoice email?"
+          ]
+        }
+      },
+      "sameTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 33,
+          "hit3": 39,
+          "mrr": 0.8979166666666668,
+          "missed": [
+            "Which email provider sends invoice emails?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 27,
+          "hit3": 34,
+          "mrr": 0.7758333333333334,
+          "missed": [
+            "How can you tell a production API key from its prefix?",
+            "How often do we retry a webhook that failed?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "What uptime target does the public API have?",
+            "Which service delivers invoice email?"
+          ]
+        }
+      }
+    },
+    {
+      "distractors": 1000,
+      "nodes": 1082,
+      "dbBytes": 3891200,
+      "loadSeconds": 0.9,
+      "searchMs": {
+        "p50": 2.25,
+        "p95": 3.92
+      },
+      "getMs": {
+        "p50": 0.11,
+        "p95": 0.21
+      },
+      "otherTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 33,
+          "hit3": 40,
+          "mrr": 0.9083333333333332,
+          "missed": []
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 26,
+          "hit3": 33,
+          "mrr": 0.7441666666666668,
+          "missed": [
+            "When does a cached permission expire?",
+            "How can you tell a production API key from its prefix?",
+            "How often do we retry a webhook that failed?",
+            "What date did the first API version stop working?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "What uptime target does the public API have?"
+          ]
+        }
+      },
+      "sameTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 27,
+          "hit3": 33,
+          "mrr": 0.7627380952380952,
+          "missed": [
+            "How many custom roles can a workspace have?",
+            "How deep can groups be nested?",
+            "What prefix do live API keys start with?",
+            "Where do currency conversion rates for reports come from?",
+            "Which AWS region hosts EU workspaces?",
+            "What is the API availability SLO?",
+            "Which email provider sends invoice emails?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 17,
+          "hit3": 21,
+          "mrr": 0.48375,
+          "missed": [
+            "When does a cached permission expire?",
+            "Is there a limit on custom roles per workspace?",
+            "How much time does someone get to take over as workspace Owner?",
+            "Can a group contain another group, and how far?",
+            "What does the API respond with when a user lacks permission?",
+            "How big can an expense be before it needs approval by default?",
+            "What is the retention period for the audit log?",
+            "How can you tell a production API key from its prefix?",
+            "How often do we retry a webhook that failed?",
+            "At what point does an invoice get its number?",
+            "How many items can one page of an API list return?",
+            "What date did the first API version stop working?",
+            "How do receivers verify our webhook signatures?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "During which hours may migrations that lock tables be applied?",
+            "How long does a canary run before a full rollout?",
+            "What uptime target does the public API have?",
+            "Which service delivers invoice email?"
+          ]
+        }
+      }
+    },
+    {
+      "distractors": 10000,
+      "nodes": 10082,
+      "dbBytes": 33103872,
+      "loadSeconds": 12.6,
+      "searchMs": {
+        "p50": 9.63,
+        "p95": 22.29
+      },
+      "getMs": {
+        "p50": 0.15,
+        "p95": 0.24
+      },
+      "otherTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 33,
+          "hit3": 39,
+          "mrr": 0.8958333333333333,
+          "missed": [
+            "What prefix do live API keys start with?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 23,
+          "hit3": 32,
+          "mrr": 0.6935416666666666,
+          "missed": [
+            "When does a cached permission expire?",
+            "Can a group contain another group, and how far?",
+            "How can you tell a production API key from its prefix?",
+            "How often do we retry a webhook that failed?",
+            "What date did the first API version stop working?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "What uptime target does the public API have?"
+          ]
+        }
+      },
+      "sameTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 22,
+          "hit3": 27,
+          "mrr": 0.6197916666666667,
+          "missed": [
+            "Can roles be assigned directly to a user?",
+            "How many custom roles can a workspace have?",
+            "How deep can groups be nested?",
+            "What HTTP status does a failed permission check return?",
+            "What is the default approval limit?",
+            "What prefix do live API keys start with?",
+            "How much does the Business plan cost per member?",
+            "Which Stripe API version is pinned?",
+            "Where do currency conversion rates for reports come from?",
+            "Which AWS region hosts EU workspaces?",
+            "When are deploys frozen?",
+            "What is the API availability SLO?",
+            "Which email provider sends invoice emails?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 10,
+          "hit3": 14,
+          "mrr": 0.3036111111111111,
+          "missed": [
+            "When does a cached permission expire?",
+            "Do users get roles directly, or only through groups?",
+            "Is there a limit on custom roles per workspace?",
+            "How much time does someone get to take over as workspace Owner?",
+            "Can a group contain another group, and how far?",
+            "What does the API respond with when a user lacks permission?",
+            "How big can an expense be before it needs approval by default?",
+            "What is the retention period for the audit log?",
+            "How can you tell a production API key from its prefix?",
+            "What version of the Stripe API do we use?",
+            "How often do we retry a webhook that failed?",
+            "At what point does an invoice get its number?",
+            "What is the source of exchange rates in reports?",
+            "How many items can one page of an API list return?",
+            "What date did the first API version stop working?",
+            "How long do we keep the response for an idempotency key?",
+            "How do receivers verify our webhook signatures?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "During which hours may migrations that lock tables be applied?",
+            "How long does a canary run before a full rollout?",
+            "Is there a weekly deploy freeze?",
+            "What uptime target does the public API have?",
+            "Which service delivers invoice email?",
+            "What is the rotation schedule for database credentials?",
+            "If the invoice template changes, do old PDFs change too?"
+          ]
+        }
+      }
+    },
+    {
+      "distractors": 100000,
+      "nodes": 100082,
+      "dbBytes": 327254016,
+      "loadSeconds": 597.9,
+      "searchMs": {
+        "p50": 338.82,
+        "p95": 755.16
+      },
+      "getMs": {
+        "p50": 0.18,
+        "p95": 0.22
+      },
+      "otherTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 32,
+          "hit3": 38,
+          "mrr": 0.8744047619047619,
+          "missed": [
+            "What prefix do live API keys start with?",
+            "What is the API availability SLO?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 21,
+          "hit3": 29,
+          "mrr": 0.6370833333333333,
+          "missed": [
+            "When does a cached permission expire?",
+            "Can a group contain another group, and how far?",
+            "What is the retention period for the audit log?",
+            "How can you tell a production API key from its prefix?",
+            "At what point does an invoice get its number?",
+            "How many items can one page of an API list return?",
+            "What date did the first API version stop working?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "During which hours may migrations that lock tables be applied?",
+            "What uptime target does the public API have?"
+          ]
+        }
+      },
+      "sameTopic": {
+        "questions": {
+          "n": 40,
+          "hit1": 16,
+          "hit3": 21,
+          "mrr": 0.47340277777777773,
+          "missed": [
+            "How long do cached permissions live in Redis?",
+            "Can roles be assigned directly to a user?",
+            "How many custom roles can a workspace have?",
+            "How deep can groups be nested?",
+            "What HTTP status does a failed permission check return?",
+            "What is the default approval limit?",
+            "What prefix do live API keys start with?",
+            "How much does the Business plan cost per member?",
+            "Which Stripe API version is pinned?",
+            "How many times is a failed webhook retried?",
+            "When are invoice numbers assigned?",
+            "Where do currency conversion rates for reports come from?",
+            "Which AWS region hosts EU workspaces?",
+            "How long is point-in-time recovery retained for the database?",
+            "When are deploys frozen?",
+            "What is the API availability SLO?",
+            "Which email provider sends invoice emails?",
+            "How often do database passwords rotate?",
+            "How long does a workspace data export link stay valid?"
+          ]
+        },
+        "paraphrases": {
+          "n": 40,
+          "hit1": 6,
+          "hit3": 7,
+          "mrr": 0.17020833333333332,
+          "missed": [
+            "When does a cached permission expire?",
+            "Do users get roles directly, or only through groups?",
+            "Is there a limit on custom roles per workspace?",
+            "How much time does someone get to take over as workspace Owner?",
+            "Can a group contain another group, and how far?",
+            "What does the API respond with when a user lacks permission?",
+            "How big can an expense be before it needs approval by default?",
+            "What is the retention period for the audit log?",
+            "When does a single sign-on login expire?",
+            "How can you tell a production API key from its prefix?",
+            "What is the per-seat price of the Business tier?",
+            "Do Viewer seats count toward the bill?",
+            "What version of the Stripe API do we use?",
+            "How often do we retry a webhook that failed?",
+            "At what point does an invoice get its number?",
+            "Which rounding mode does invoice tax use?",
+            "What is the source of exchange rates in reports?",
+            "How many items can one page of an API list return?",
+            "What date did the first API version stop working?",
+            "How long do we keep the response for an idempotency key?",
+            "How do receivers verify our webhook signatures?",
+            "Where is data for European customers hosted?",
+            "How far back can the Postgres database be restored?",
+            "During which hours may migrations that lock tables be applied?",
+            "How long does a canary run before a full rollout?",
+            "Is there a weekly deploy freeze?",
+            "What uptime target does the public API have?",
+            "Which service delivers invoice email?",
+            "What is the rotation schedule for database credentials?",
+            "How long can a data export download link be used?",
+            "If the invoice template changes, do old PDFs change too?",
+            "Why was Textract picked for receipt OCR?",
+            "When are two reviewers required on a pull request?"
+          ]
+        }
+      }
+    }
+  ]
+}

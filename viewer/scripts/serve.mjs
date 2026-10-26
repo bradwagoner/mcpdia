@@ -1,19 +1,20 @@
 // Serves the viewer and reads the graph live, so the page can follow changes the MCP server makes.
-// Usage (from viewer/): npm start  [-- path/to/mcpdia.db]
+// Usage (from viewer/): npm start  [-- path/to/mcpdia.db | postgres://…]
 //                        npm run dev [-- path/to/mcpdia.db]   also rebuilds on save and reloads the page
 //                        add --lan to open it to other devices on your network
-// Listens on 127.0.0.1 only (or every interface with --lan), answers only to this machine's own
-// names, and opens the database read-only.
+// Listens on 127.0.0.1 only (or every interface with --lan, or HOST), answers only to this machine's
+// own names, and opens the database read-only.
 import { createServer } from 'node:http';
 import { watch } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { hostname, networkInterfaces } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dataVersion, defaultDbPath, openGraph, readGraph } from './read-graph.mjs';
+import { defaultSource, describeSource, openGraph } from './read-graph.mjs';
 
 const args = process.argv.slice(2);
-const dbPath = args.find((a) => !a.startsWith('--')) ?? defaultDbPath();
+const source = args.find((a) => !a.startsWith('--')) ?? defaultSource();
+const shownSource = describeSource(source);
 const devMode = args.includes('--watch');
 const lanMode = args.includes('--lan');
 const port = Number(process.env.PORT ?? 8000);
@@ -25,7 +26,7 @@ const types = {
   '.map': 'application/json',
 };
 
-const db = openGraph(dbPath);
+const db = await openGraph(source);
 
 // Only this machine's own names. A web page on another site can point its own host name at 127.0.0.1
 // (DNS rebinding) and read the graph as if it were same-origin; checking Host stops that.
@@ -45,9 +46,10 @@ const server = createServer(async (req, res) => {
   const path = new URL(req.url ?? '/', 'http://localhost').pathname;
   try {
     if (path === '/api/reload') return listenForReload(res);
-    if (path === '/api/version') return send(res, 200, 'text/plain', String(dataVersion(db)));
+    if (path === '/api/version') return send(res, 200, 'text/plain', await db.version());
     if (path === '/api/graph') {
-      const body = JSON.stringify({ source: dbPath, version: String(dataVersion(db)), ...readGraph(db) });
+      const version = await db.version();
+      const body = JSON.stringify({ source: shownSource, version, ...(await db.read()) });
       return send(res, 200, 'application/json', body);
     }
     // Static files from www/, never outside it.
@@ -95,8 +97,9 @@ function send(res, status, type, body) {
   res.end(body);
 }
 
-server.listen(port, lanMode ? '0.0.0.0' : '127.0.0.1', () => {
-  console.log(`Viewer on http://localhost:${port} (live from ${dbPath}${devMode ? ', reloads on save' : ''})`);
+// In Docker, HOST=0.0.0.0 lets the published port reach it; Host names are still checked.
+server.listen(port, process.env.HOST ?? (lanMode ? '0.0.0.0' : '127.0.0.1'), () => {
+  console.log(`Viewer on http://localhost:${port} (live from ${shownSource}${devMode ? ', reloads on save' : ''})`);
   if (!lanMode) return;
   const urls = lanAddresses.filter((a) => !a.startsWith('[')).map((a) => `http://${a}:${port}`);
   console.log(`On your network: ${urls.join(', ') || 'no network address found'}`);

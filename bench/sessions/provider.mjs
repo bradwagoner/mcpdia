@@ -66,10 +66,13 @@ export default class SessionProvider {
     const work = mkdtempSync(join(tmpdir(), `mcpdia-bench-${this.side}-`));
     try {
       const dbPath = join(work, 'mcpdia.db');
-      if (this.side === 'mcpdia') copyFileSync(join(FIXTURES, 'mcpdia.db'), dbPath);
-      else cpSync(join(FIXTURES, this.side), work, { recursive: true });
+      // A test can pick another set of starting points, such as the growth step's bigger memory.
+      const fixtures = vars.fixture ? join(FIXTURES, vars.fixture) : FIXTURES;
+      if (this.side === 'mcpdia') copyFileSync(join(fixtures, 'mcpdia.db'), dbPath);
+      else cpSync(join(fixtures, this.side), work, { recursive: true });
 
-      const session = DRY ? dryRun(vars) : await this.run(prompt, work, dbPath);
+      const maxTurns = Number(vars.maxTurns ?? this.config.maxTurns);
+      const session = DRY ? dryRun(vars) : await this.run(prompt, work, dbPath, maxTurns);
       if (session.error) return { error: session.error };
 
       let output = session.answer;
@@ -109,7 +112,7 @@ export default class SessionProvider {
     }
   }
 
-  async run(prompt, work, dbPath) {
+  async run(prompt, work, dbPath, maxTurns) {
     const remaining = RUN_CAP - spent;
     if (remaining <= 0) return { error: `Run cap of $${RUN_CAP} reached; session skipped.` };
     const apiKey = readKey();
@@ -128,7 +131,7 @@ export default class SessionProvider {
       options: {
         cwd: work,
         model: this.config.model,
-        maxTurns: this.config.maxTurns,
+        maxTurns,
         maxBudgetUsd: Math.min(this.config.sessionCapUsd, remaining),
         // Isolation: no personal settings, no other MCP servers. The markdown sides load only their CLAUDE.md.
         settingSources: mcpdia ? [] : ['project'],

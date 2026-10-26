@@ -1,0 +1,8 @@
+# Moves the SQLite stack off the default ports so it can run beside the Postgres one.
+services:
+  mcpdia:
+    ports: !override
+      - '127.0.0.1:7421:7411'
+  viewer:
+    ports: !override
+      - '127.0.0.1:7422:8000'

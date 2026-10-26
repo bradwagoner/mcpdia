@@ -257,6 +257,32 @@ export function graphStoreSuite(name: string, makeStore: () => Promise<GraphStor
         expect((await store.upsertEdge(edge('concept/permissions', 'concept/roles', 'references'))).created).toBe(true);
       });
 
+      it('finds where links of one type come from, skipping deleted sources', async () => {
+        const target = await store.createNode(node());
+        await store.createNode(node({ key: 'note/a', title: 'A' }));
+        const b = await store.createNode(node({ key: 'note/b', title: 'B' }));
+        await store.upsertEdge(edge('note/a', 'concept/permissions', 'conflicts_with'));
+        await store.upsertEdge(edge('note/b', 'concept/permissions', 'conflicts_with'));
+        await store.upsertEdge(edge('note/a', 'concept/permissions', 'references'));
+        await store.setStatus(b.id, 'deleted', 'local');
+        expect(await store.linksInto([target.id], 'conflicts_with')).toEqual(
+          new Map([[target.id, [{ namespace: 'default', key: 'note/a' }]]]),
+        );
+        expect(await store.linksInto([], 'conflicts_with')).toEqual(new Map());
+      });
+
+      it('soft-deletes an edge, which then drops out of neighbors and listings', async () => {
+        const from = await store.createNode(node());
+        await store.createNode(node({ key: 'concept/roles', title: 'Roles' }));
+        const { edge: e } = await store.upsertEdge(edge('concept/permissions', 'concept/roles'));
+        await store.deleteEdge(e.id);
+        await store.deleteEdge(e.id);
+        expect(await store.neighbors(from.id)).toEqual([]);
+        expect(await store.listEdges(['default'])).toEqual([]);
+        // The same link can be made again afterwards.
+        expect((await store.upsertEdge(edge('concept/permissions', 'concept/roles'))).created).toBe(true);
+      });
+
       it('stores an edge to a missing node and resolves it when the node is created', async () => {
         const from = await store.createNode(node());
         const { edge: e } = await store.upsertEdge(edge('concept/permissions', 'concept/audit-log'));

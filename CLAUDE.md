@@ -29,7 +29,7 @@ Every core call receives a `context` object (caller, namespaces). `context.names
 ## Current target: v0.1 (see `docs/SCOPE.md`)
 Core + SQLite store + numbered-SQL migrations, FTS5 search, and the tools `orient`, `search`, `get`, `upsert`, `link` first; then `annotate`, `feedback`, `recent`, `supersede`, `verify`, `delete` (soft), `list_types`. Then the benchmark harness comparing markdown-file memory with the graph.
 
-Out of scope for v0.1: auth, Postgres, Docker/HTTP, embeddings, import/merge. The optional graph viewer in `viewer/` shipped early (ADR 0014). Do not build these, but do not make choices that block them.
+Out of scope for v0.1: auth, embeddings, import/merge. The optional graph viewer in `viewer/` shipped early (ADR 0014), and so did the Postgres store, HTTP transport and Docker image (ADR 0025). Do not build the rest, but do not make choices that block them.
 
 ## Working agreements
 - **Record decisions.** When a design decision is made or changed, add or supersede an ADR in `docs/decisions/` and update the index. The reasoning trail is part of the deliverable.
@@ -40,4 +40,4 @@ Out of scope for v0.1: auth, Postgres, Docker/HTTP, embeddings, import/merge. Th
 - If something in these docs seems wrong or unclear, say so and propose a change rather than silently deviating.
 
 ## Naming
-The project is **MCPdia**, short for Model Context Protocol: Distilled, Indexed Answers (ADR 0022, which replaced the earlier name MCPedia). The npm package is `@bradwagoner/mcpdia`. Runtime names use it too: `MCPDIA_DB`, `MCPDIA_METRICS`, `~/.mcpdia/mcpdia.db`.
+The project is **MCPdia**, short for Model Context Protocol: Distilled, Indexed Answers (ADR 0022, which replaced the earlier name MCPedia). The npm package is `@bradwagoner/mcpdia`. Runtime names use it too: `MCPDIA_DB`, `MCPDIA_DATABASE_URL`, `MCPDIA_METRICS`, `~/.mcpdia/mcpdia.db`.

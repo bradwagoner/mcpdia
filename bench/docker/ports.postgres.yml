@@ -1,0 +1,8 @@
+# Moves the Postgres stack off the default ports, so it leaves any stack you run yourself alone.
+services:
+  mcpdia:
+    ports: !override
+      - '127.0.0.1:7431:7411'
+  viewer:
+    ports: !override
+      - '127.0.0.1:7432:8000'

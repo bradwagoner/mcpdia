@@ -1,6 +1,6 @@
 # Tool contracts
 
-What each MCP tool takes and returns. Responses are compact text (ADR 0011); render levels are from ADR 0004. Keys are shown bare while one namespace is visible (`concept/permissions`) and qualified with several (`dev:concept/permissions`). Inputs accept either form, or a node's ULID.
+What each MCP tool takes and returns. Responses are compact text (ADR 0011); render levels are from ADR 0004. Keys in the write namespace are shown bare (`concept/permissions`) and keys in any other namespace qualified (`mcpdia:concept/stubs-first`). Inputs accept either form, or a node's ULID; a bare key means the write namespace. Starter-set nodes (ADR 0026) are edited like any other. When a reload finds the starter set also changed a node you edited, `get` and `search` mark it at every level, `(newer version in mcpdia:conflict/concept/x)`, and `full` adds a line on how to resolve it. The `resolve-conflicts` prompt walks through them all.
 
 | Level | One result looks like |
 |---|---|

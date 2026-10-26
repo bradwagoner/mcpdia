@@ -1,0 +1,12 @@
+**/node_modules
+dist
+dist-bench
+.git
+.idea
+bench
+viewer
+docs
+test
+coverage
+*.db
+*.db-*

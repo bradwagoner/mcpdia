@@ -4,7 +4,7 @@ import { UserError } from './core/errors.js';
 
 /** Command-line helpers for src/index.ts, kept apart so they can be tested without starting anything. */
 
-export const COMMANDS = ['export'] as const;
+export const COMMANDS = ['export', 'seed'] as const;
 export type Command = (typeof COMMANDS)[number] | 'serve';
 
 /** No command (or only flags) starts the server. Anything else must be a known command. */

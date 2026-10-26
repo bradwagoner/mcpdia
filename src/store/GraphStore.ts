@@ -187,6 +187,8 @@ export interface GraphStore {
 
   /** Insert, or update the note of the matching active edge. */
   upsertEdge(edge: NewEdge): Promise<{ edge: EdgeRecord; created: boolean }>;
+  /** Soft-deletes an active edge. An edge that is already gone is left alone. */
+  deleteEdge(id: string): Promise<void>;
   /**
    * Moves every active edge touching `oldId` onto `replacement`. An edge that
    * would duplicate an existing one, or link the two nodes to each other, is
@@ -197,6 +199,8 @@ export interface GraphStore {
   neighbors(nodeId: string): Promise<Neighbor[]>;
   /** Active edge counts per node id. */
   edgeCounts(nodeIds: string[]): Promise<Map<string, number>>;
+  /** Where active edges of `type` into these nodes come from, by target id. Sources must be active nodes. */
+  linksInto(nodeIds: string[], type: string): Promise<Map<string, { namespace: string; key: string }[]>>;
 
   /** Every node in the namespaces, any status, oldest first. Feeds export. */
   listNodes(namespaces: string[]): Promise<NodeRecord[]>;

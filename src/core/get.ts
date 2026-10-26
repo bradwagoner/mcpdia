@@ -2,7 +2,7 @@ import type { Context } from '../context.js';
 import type { GraphStore, NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import { displayKey, parseRef } from './keys.js';
-import { findNode, supersededByKey } from './nodes.js';
+import { findNode, openConflicts, supersededByKey } from './nodes.js';
 import { getSetting } from './settings.js';
 
 export const MAX_NEIGHBORS = 20;
@@ -28,6 +28,8 @@ export type GetItem =
       ref: string;
       node: NodeRecord;
       supersededByKey?: string;
+      /** Display key of an open starter-set conflict on this node. */
+      conflictKey?: string;
       neighbors?: NeighborView[];
       /** Neighbors beyond MAX_NEIGHBORS that were left out. */
       moreNeighbors?: number;
@@ -51,7 +53,9 @@ export async function get(ctx: Context, store: GraphStore, input: GetInput): Pro
       items.push({ ref, node: null, deleted: node !== null });
       continue;
     }
+    const conflict = (await openConflicts(ctx, store, [node])).get(node.id);
     const item: GetItem = { ref, node, supersededByKey: await supersededByKey(ctx, store, node) };
+    if (conflict) item.conflictKey = conflict;
     if (input.neighbors) {
       // Links can cross namespaces; only show the ends the caller can read.
       const readable = (await store.neighbors(node.id)).filter((n) => ctx.namespaces.includes(n.otherNamespace));

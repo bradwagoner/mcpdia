@@ -25,7 +25,9 @@ npm install
 npm start                   # http://localhost:8000, live from ~/.mcpdia/mcpdia.db (or $MCPDIA_DB)
 ```
 
-`npm start` opens the database read-only and only listens on localhost. To point it at another graph, run `npm start -- path/to/graph.db`.
+`npm start` opens the database read-only and only listens on localhost. To point it at another graph, run `npm start -- path/to/graph.db`, or `npm start -- postgres://…` for a Postgres graph (it also reads `MCPDIA_DATABASE_URL`).
+
+Running MCPdia with Docker Compose? The viewer comes with it, live from the Postgres graph at http://localhost:7412 ([docs/docker.md](../docs/docker.md)).
 
 Want it on your phone or another computer? `npm start -- --lan` (or `npm run dev -- --lan`) also listens on your local network and prints the address to open. There's no login, so anyone on that network can read the graph; use it on networks you trust. On Windows, allow Node through the firewall for **Private networks** when asked.
 

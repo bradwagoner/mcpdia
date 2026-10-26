@@ -59,6 +59,45 @@ describe('exportJsonl', () => {
     expect(perms).toMatchObject({ status: 'superseded', summary: 'Roles grant actions.' });
   });
 
+  it('keeps only tagged nodes and the links between them with tags', async () => {
+    await upsert(ctx, store, { type: 'concept', title: 'Public', tags: ['Starter'] });
+    await upsert(ctx, store, {
+      type: 'concept',
+      title: 'Also public',
+      tags: ['starter'],
+      links: [{ type: 'part_of', to: 'concept/public' }],
+    });
+    await upsert(ctx, store, { type: 'plan', title: 'Private', links: [{ type: 'references', to: 'concept/public' }] });
+
+    const lines: ExportLine[] = [];
+    await exportJsonl(ctx, store, { tags: ['STARTER'] }, (line) => {
+      lines.push(JSON.parse(line) as ExportLine);
+    });
+    expect(lines[0]).toMatchObject({ kind: 'header', tags: ['starter'], nodes: 2, edges: 1 });
+    expect(lines.filter((l) => l.kind === 'node').map((l) => (l.kind === 'node' ? l.key : ''))).toEqual([
+      'concept/public',
+      'concept/also-public',
+    ]);
+    expect(lines.filter((l) => l.kind === 'edge')).toEqual([
+      expect.objectContaining({ fromKey: 'concept/also-public', type: 'part_of' }),
+    ]);
+  });
+
+  it('exports only the write namespace unless others are named', async () => {
+    const both = { ...ctx, namespaces: ['default', 'mcpdia'] };
+    await upsert(ctx, store, { type: 'concept', title: 'Mine' });
+    await upsert(both, store, { key: 'mcpdia:concept/theirs', type: 'concept', title: 'Theirs' });
+    const keys = async (namespaces?: string[]) => {
+      const lines: ExportLine[] = [];
+      await exportJsonl(both, store, { namespaces }, (line) => {
+        lines.push(JSON.parse(line) as ExportLine);
+      });
+      return lines.map((l) => (l.kind === 'node' ? `${l.namespace}:${l.key}` : l.kind));
+    };
+    expect(await keys()).toEqual(['header', 'default:concept/mine']);
+    expect(await keys(['default', 'mcpdia'])).toEqual(['header', 'default:concept/mine', 'mcpdia:concept/theirs']);
+  });
+
   it('refuses a namespace the caller cannot read', async () => {
     const err = await exported(['secret']).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(UserError);

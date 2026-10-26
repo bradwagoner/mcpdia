@@ -22,6 +22,8 @@ export interface RenderExtras {
   supersededByKey?: string;
   /** Query words a partial search hit matched. */
   matched?: string[];
+  /** Display key of an open starter-set conflict on the node (ADR 0026). */
+  conflictKey?: string;
   /** Search words. A snippet shows the text around the first one that would otherwise be cut off. */
   terms?: string[];
 }
@@ -49,6 +51,7 @@ export function renderStub(ctx: Context, node: NodeRecord, level: RenderLevel, e
   if (node.status === 'deleted') markers.push('deleted');
   if (extras.supersededByKey) markers.push(`superseded by ${extras.supersededByKey}`);
   if (flaggedWrong(node)) markers.push('flagged outdated or wrong');
+  if (extras.conflictKey) markers.push(`newer version in ${extras.conflictKey}`);
   if (extras.matched?.length) markers.push(`matched: ${extras.matched.join(', ')}`);
   const lines = [titleLine(ctx, node) + (markers.length ? ` (${markers.join('; ')})` : '')];
   if (level === 'summary' || level === 'snippet') lines.push(`  ${summaryLine(node, extras)}`);
@@ -73,6 +76,11 @@ export function renderFull(ctx: Context, node: NodeRecord, extras: RenderExtras 
   const lines = [`${titleLine(ctx, node)}   ${meta.join(' · ')}`];
   if (node.status === 'deleted') lines.push(`Deleted on ${day(node.updatedAt)}. Upsert this key to restore it.`);
   if (extras.supersededByKey) lines.push(`Superseded by ${extras.supersededByKey}`);
+  if (extras.conflictKey) {
+    lines.push(
+      `The starter set changed this node after it was edited here; its version is in ${extras.conflictKey}. Compare, keep what's right, then delete ${extras.conflictKey} (or run the resolve-conflicts prompt).`,
+    );
+  }
   if (flaggedWrong(node)) {
     lines.push(
       `Flagged outdated or wrong on ${day(node.lastWrongAt!)}. Check it before relying on it; fix it with upsert, or verify it if it is still right.`,
@@ -86,7 +94,7 @@ export function renderFull(ctx: Context, node: NodeRecord, extras: RenderExtras 
   if (node.aliases.length) labels.push(`Aliases: ${node.aliases.join(', ')}`);
   if (labels.length) lines.push(labels.join('   '));
 
-  if (Object.keys(node.properties).length) lines.push(`Properties: ${JSON.stringify(node.properties)}`);
+  if (Object.keys(node.properties).length) lines.push(`Properties: ${JSON.stringify(sortKeys(node.properties))}`);
   if (node.body) lines.push('', node.body);
   return lines.join('\n');
 }
@@ -164,4 +172,15 @@ function wordStartAfter(text: string, at: number): number {
 
 function day(iso: string): string {
   return iso.slice(0, 10);
+}
+
+/** Object keys sorted at every depth, arrays kept in order, so every store renders the same text. */
+export function sortKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeys);
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map((k) => [k, sortKeys((value as Record<string, unknown>)[k])]),
+  );
 }

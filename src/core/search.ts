@@ -2,7 +2,7 @@ import type { Context } from '../context.js';
 import { NODE_STATUSES, type GraphStore, type NodeRecord } from '../store/GraphStore.js';
 import { UserError } from './errors.js';
 import type { RenderLevel } from './render.js';
-import { supersededByKey } from './nodes.js';
+import { openConflicts, supersededByKey } from './nodes.js';
 import { normalizeNodeType, normalizeTag } from './vocabulary.js';
 
 export interface SearchInput {
@@ -22,6 +22,8 @@ export interface SearchHit {
   matched?: string[];
   /** Display key of the replacing node, for superseded hits. */
   supersededByKey?: string;
+  /** Display key of an open starter-set conflict on this node. */
+  conflictKey?: string;
 }
 
 export interface SearchOutput {
@@ -105,6 +107,7 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
 
   const wantsCounts = input.level === 'summary' || input.level === 'snippet';
   const counts = wantsCounts ? await store.edgeCounts(nodes.map((n) => n.id)) : undefined;
+  const conflicts = await openConflicts(ctx, store, nodes);
   return {
     query: input.query,
     terms,
@@ -114,6 +117,7 @@ export async function search(ctx: Context, store: GraphStore, input: SearchInput
         edgeCount: counts?.get(node.id) ?? (wantsCounts ? 0 : undefined),
         matched: i >= fullMatches ? (matched.get(node.id) ?? []) : undefined,
         supersededByKey: await supersededByKey(ctx, store, node),
+        conflictKey: conflicts.get(node.id),
       })),
     ),
     total,

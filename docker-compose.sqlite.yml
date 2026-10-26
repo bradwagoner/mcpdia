@@ -1,0 +1,34 @@
+# MCPdia on SQLite, no Postgres: `docker compose -f docker-compose.sqlite.yml up -d`, then
+#   claude mcp add --transport http mcpdia http://localhost:7411/mcp
+# The graph is one file, /data/mcpdia.db in the mcpdia-data volume. The read-only viewer is at http://localhost:7412.
+
+name: mcpdia-sqlite
+
+services:
+  mcpdia:
+    build: .
+    image: mcpdia
+    environment:
+      MCPDIA_METRICS: ${MCPDIA_METRICS:-0}
+    ports:
+      - '127.0.0.1:7411:7411'
+    volumes:
+      - mcpdia-data:/data
+    restart: unless-stopped
+
+  viewer:
+    build: ./viewer
+    image: mcpdia-viewer
+    depends_on:
+      mcpdia:
+        condition: service_healthy
+    environment:
+      MCPDIA_DB: /data/mcpdia.db
+    volumes:
+      - mcpdia-data:/data
+    ports:
+      - '127.0.0.1:7412:8000'
+    restart: unless-stopped
+
+volumes:
+  mcpdia-data:

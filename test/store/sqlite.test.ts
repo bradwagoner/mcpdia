@@ -29,6 +29,22 @@ describe('SqliteStore', () => {
     expect(nodes).toHaveLength(count);
     expect(nodes.at(-1)).toMatchObject({ key: 'note/32999', tags: ['last'] });
     await store.close();
+    // Writing 33,000 rows takes a few seconds, more while the rest of the suite runs alongside.
+  }, 20_000);
+
+  // better-sqlite3 never frees a statement, so preparing one per call grew memory by ~10 KB a call.
+  it('prepares each statement once', async () => {
+    const store = new SqliteStore(':memory:');
+    const base = { namespace: 'default', type: 'note', summary: null, body: null, properties: {}, source: 'local' };
+    for (let i = 0; i < 50; i++) {
+      await store.createNode({ ...base, key: `note/${i}`, title: `Note ${i}`, aliases: [], tags: [], author: 'local' });
+    }
+    const after50 = (store as unknown as { statements: Map<string, unknown> }).statements.size;
+    for (let i = 50; i < 100; i++) {
+      await store.createNode({ ...base, key: `note/${i}`, title: `Note ${i}`, aliases: [], tags: [], author: 'local' });
+    }
+    expect((store as unknown as { statements: Map<string, unknown> }).statements.size).toBe(after50);
+    await store.close();
   });
 });
 
