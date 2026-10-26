@@ -1,6 +1,6 @@
 # Side-by-side Claude sessions. Run through run.mjs, which sets the step, the
 # spending cap and which side runs.
-description: MCPedia against markdown memory files
+description: MCPdia against markdown memory files
 prompts:
   - '{{prompt}}'
 providers:
