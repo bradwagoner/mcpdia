@@ -36,7 +36,9 @@ function renderItem(ctx: Context, item: GetItem, level: RenderLevel, neighborLev
       ? `${item.ref} was deleted; all_status: true shows it.`
       : `Not found: ${item.ref}. search finds nodes by their words.`;
   }
-  const lines = [renderStub(ctx, item.node, level, { supersededByKey: item.supersededByKey })];
+  const lines = [
+    renderStub(ctx, item.node, level, { supersededByKey: item.supersededByKey, conflictKey: item.conflictKey }),
+  ];
   if (item.neighbors?.length) {
     lines.push('', 'Links:', ...renderNeighbors(ctx, item.neighbors, neighborLevel));
     if (item.moreNeighbors) lines.push(`+${item.moreNeighbors} more`);

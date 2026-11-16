@@ -18,7 +18,7 @@ The server's MCP instructions, which clients load at the start of every session,
 
 ## Today: local and single-user
 
-In v0.1 MCPdia runs in solo mode (ADR 0006):
+By default MCPdia runs in solo mode (ADR 0006):
 
 - The server speaks MCP over **stdio**. It opens no network port and makes no outbound requests.
 - The graph is a **SQLite file on your machine**, `~/.mcpdia/mcpdia.db` by default or the path in `MCPDIA_DB`. Anyone who can read that file can read the graph, and anyone who can write it can change it. Protect it like any other file in your home directory.
@@ -26,11 +26,25 @@ In v0.1 MCPdia runs in solo mode (ADR 0006):
 - `mcpdia export` writes the whole graph as JSONL. Treat the export file with the same care as the database. It refuses to write over the database itself.
 - The optional viewer (`viewer/`) opens the database read-only and serves it on `localhost` only. It answers only to local host names, so a web page can't reach it through DNS rebinding. With `--lan` it also listens on your local network, still read-only, and anyone on that network can read the graph, so use it only on networks you trust.
 
+### HTTP and Docker
+
+`mcpdia --http` and the Docker image serve MCP over HTTP (ADR 0025), on Postgres or SQLite. There is still **no authentication**, so anyone who can reach the port can read and write the graph.
+
+- Outside Docker the server listens on `127.0.0.1`. Compose publishes it and the read-only viewer on `127.0.0.1` only, and Postgres is not published at all. The viewer connects with every transaction set read-only.
+- The server answers only to `localhost` host names, plus any listed in `MCPDIA_HTTP_ALLOWED_HOSTS`, so a web page can't reach it through DNS rebinding.
+- Change the Postgres password from its default (`POSTGRES_PASSWORD`) before you put anything real in it. Startup logs show the database URL with the password masked.
+- Opening it to a network is for networks you trust, until token auth lands.
+- `GET /export` serves the graph as an export under the same rule: the same host check as `/mcp`, and no CORS headers, so a web page can't read it. It shows nothing `/mcp` doesn't already.
+
+### Starter sets
+
+A starter set (ADR 0026) loads text someone else wrote into your graph, from a file or a URL. That makes it another way in for prompt injection, and the rule above holds: it's data, not instructions. Load sets from sources you trust, prefer files you can read before loading, and treat a URL source like a dependency you install. Loads are capped at 50 MB and a URL gets 5 seconds before the server starts without it.
+
 Keep secrets out of the graph. API keys, passwords and personal data do not belong in nodes; there is no per-node access control and history is never purged.
 
 ## Coming with team mode (v0.3)
 
-Team mode adds HTTP transport and Postgres, and with them a real network boundary:
+Team mode builds on the HTTP server and Postgres store with a real network boundary:
 
 - **Token-based authentication** on every request. The caller identity becomes the `context.caller` stamped on writes, so the audit trail names real people and agents instead of `local`.
 - **Per-namespace permissions.** Team mode builds `context.namespaces` from the caller's grants, and every read stays inside it, so a team sees its namespaces and nothing else.

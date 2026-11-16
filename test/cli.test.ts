@@ -19,7 +19,7 @@ describe('pickCommand', () => {
   it('refuses an unknown command instead of starting the server', () => {
     expect(() => pickCommand(['exprot'])).toThrow(UserError);
     expect(errorLine(catchError(() => pickCommand(['exprot'])))).toBe(
-      'Unknown command: exprot. Commands: export (or no command to start the server).',
+      'Unknown command: exprot. Commands: export, seed (or no command to start the server).',
     );
   });
 });

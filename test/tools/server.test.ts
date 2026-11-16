@@ -5,6 +5,14 @@ import { soloContext } from '../../src/context.js';
 import { createServer } from '../../src/server.js';
 import { SqliteStore } from '../../src/store/sqlite/SqliteStore.js';
 
+/**
+ * What every session pays before it asks anything, in characters. A change to a tool
+ * description, the server instructions or a prompt (or an SDK upgrade) moves these.
+ */
+const PINNED_TOOLS_CHARS = 6791;
+const PINNED_INSTRUCTIONS_CHARS = 201;
+const PINNED_PROMPTS_CHARS = 103;
+
 /** End to end over MCP: the tools as a client sees them. */
 describe('MCP server', () => {
   let client: Client;
@@ -46,6 +54,24 @@ describe('MCP server', () => {
       'upsert',
       'verify',
     ]);
+  });
+
+  it('offers the resolve-conflicts prompt', async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((p) => p.name)).toEqual(['resolve-conflicts']);
+    const { messages } = await client.getPrompt({ name: 'resolve-conflicts' });
+    expect((messages[0]!.content as { text: string }).text).toContain('delete the conflict node');
+  });
+
+  it('keeps the fixed per-session cost where it was', async () => {
+    const pin = (name: string, size: number, pinned: number) =>
+      expect(
+        size,
+        `${name} is now ${size} chars (${size >= pinned ? '+' : ''}${size - pinned}). Update the pin here; if it grew, the README cost figures may need a fresh bench run.`,
+      ).toBe(pinned);
+    pin('tools/list', JSON.stringify((await client.listTools()).tools).length, PINNED_TOOLS_CHARS);
+    pin('server instructions', client.getInstructions()?.length ?? 0, PINNED_INSTRUCTIONS_CHARS);
+    pin('prompts/list', JSON.stringify((await client.listPrompts()).prompts).length, PINNED_PROMPTS_CHARS);
   });
 
   it('keeps every tool description short', async () => {

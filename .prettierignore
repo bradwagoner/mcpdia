@@ -6,3 +6,6 @@ docs/
 dist-bench/
 bench/.out/
 bench/results.json
+bench/lookups.json
+bench/stores.json
+bench/growth.json

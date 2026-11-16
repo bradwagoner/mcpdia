@@ -64,11 +64,12 @@ describe('keys', () => {
     expect(parseRef(ctx, id)).toEqual({ kind: 'id', id });
   });
 
-  it('qualifies keys only when several namespaces are visible', () => {
+  it('shows keys bare in the write namespace and qualified elsewhere', () => {
     const one = soloContext();
     const two = { ...one, namespaces: ['default', 'dev'] };
     expect(displayKey(one, 'default', 'concept/x')).toBe('concept/x');
-    expect(displayKey(two, 'default', 'concept/x')).toBe('default:concept/x');
+    expect(displayKey(two, 'default', 'concept/x')).toBe('concept/x');
+    expect(displayKey(two, 'dev', 'concept/x')).toBe('dev:concept/x');
   });
 });
 

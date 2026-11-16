@@ -1,0 +1,381 @@
+{
+  "nodes": 177,
+  "same": {
+    "n": 177,
+    "identical": 9,
+    "sameSet": 20,
+    "sameTop": 164,
+    "sameGet": 137,
+    "worst": [
+      "\"test mcpdia llm\": sqlite plan/mcpedia, postgres how-to/test-mcpedia-with-an-llm",
+      "\"cytoscape js\": sqlite library/cytoscape-js, postgres note/2026-10-15",
+      "\"sigma js\": sqlite library/sigma-js, postgres note/2026-10-15",
+      "\"local ticket branches 2026 10 14\": sqlite plan/local-ticket-branches-2026-10-14, postgres plan/ticket-branches-and-merge-order-2026",
+      "\"mcpdia\": sqlite plan/mcpedia, postgres plan/side-by-side-demo"
+    ]
+  },
+  "stores": {
+    "sqlite": {
+      "retrieval": {
+        "n": 177,
+        "title": {
+          "hit1": 169,
+          "hit3": 177,
+          "mrr": 0.97
+        },
+        "summary": {
+          "hit1": 177,
+          "hit3": 177,
+          "mrr": 1
+        }
+      },
+      "latency": {
+        "orient": {
+          "p50": 27.8,
+          "p95": 46.2
+        },
+        "search": {
+          "p50": 31.8,
+          "p95": 75.7
+        },
+        "get": {
+          "p50": 15,
+          "p95": 17.1
+        },
+        "recent": {
+          "p50": 14.8,
+          "p95": 16.6
+        }
+      },
+      "writes": {
+        "upsert": {
+          "p50": 15,
+          "p95": 17
+        },
+        "supersede": {
+          "p50": 14.6,
+          "p95": 48.5
+        },
+        "delete": {
+          "p50": 14.4,
+          "p95": 21.4
+        }
+      },
+      "concurrency": [
+        {
+          "mixed": false,
+          "clients": 1,
+          "calls": 40,
+          "perSecond": 48,
+          "p95": 32.8,
+          "errors": 0
+        },
+        {
+          "mixed": false,
+          "clients": 4,
+          "calls": 160,
+          "perSecond": 96,
+          "p95": 65.5,
+          "errors": 0
+        },
+        {
+          "mixed": false,
+          "clients": 16,
+          "calls": 640,
+          "perSecond": 101,
+          "p95": 275.6,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 1,
+          "calls": 40,
+          "perSecond": 54,
+          "p95": 32.6,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 4,
+          "calls": 160,
+          "perSecond": 109,
+          "p95": 84.8,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 16,
+          "calls": 640,
+          "perSecond": 144,
+          "p95": 211.8,
+          "errors": 0
+        }
+      ],
+      "scaled": {
+        "loadSeconds": 169.4,
+        "retrieval": {
+          "n": 177,
+          "title": {
+            "hit1": 163,
+            "hit3": 175,
+            "mrr": 0.95
+          },
+          "summary": {
+            "hit1": 177,
+            "hit3": 177,
+            "mrr": 1
+          }
+        },
+        "latency": {
+          "orient": {
+            "p50": 14.9,
+            "p95": 17.3
+          },
+          "search": {
+            "p50": 81.4,
+            "p95": 157.1
+          },
+          "get": {
+            "p50": 14.9,
+            "p95": 16.7
+          },
+          "recent": {
+            "p50": 30.6,
+            "p95": 37.8
+          }
+        },
+        "concurrency": [
+          {
+            "mixed": false,
+            "clients": 1,
+            "calls": 40,
+            "perSecond": 11,
+            "p95": 160.2,
+            "errors": 0
+          },
+          {
+            "mixed": false,
+            "clients": 4,
+            "calls": 160,
+            "perSecond": 18,
+            "p95": 396.7,
+            "errors": 0
+          },
+          {
+            "mixed": false,
+            "clients": 16,
+            "calls": 640,
+            "perSecond": 18,
+            "p95": 1637.4,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 1,
+            "calls": 40,
+            "perSecond": 14,
+            "p95": 146.9,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 4,
+            "calls": 160,
+            "perSecond": 25,
+            "p95": 326.5,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 16,
+            "calls": 640,
+            "perSecond": 23,
+            "p95": 1293.8,
+            "errors": 0
+          }
+        ]
+      }
+    },
+    "postgres": {
+      "retrieval": {
+        "n": 177,
+        "title": {
+          "hit1": 170,
+          "hit3": 176,
+          "mrr": 0.98
+        },
+        "summary": {
+          "hit1": 177,
+          "hit3": 177,
+          "mrr": 1
+        }
+      },
+      "latency": {
+        "orient": {
+          "p50": 15.7,
+          "p95": 48.7
+        },
+        "search": {
+          "p50": 38.7,
+          "p95": 62.7
+        },
+        "get": {
+          "p50": 14.8,
+          "p95": 16.7
+        },
+        "recent": {
+          "p50": 15.1,
+          "p95": 17.5
+        }
+      },
+      "writes": {
+        "upsert": {
+          "p50": 15.3,
+          "p95": 24.3
+        },
+        "supersede": {
+          "p50": 29.2,
+          "p95": 33.5
+        },
+        "delete": {
+          "p50": 15.4,
+          "p95": 24.6
+        }
+      },
+      "concurrency": [
+        {
+          "mixed": false,
+          "clients": 1,
+          "calls": 40,
+          "perSecond": 16,
+          "p95": 142,
+          "errors": 0
+        },
+        {
+          "mixed": false,
+          "clients": 4,
+          "calls": 160,
+          "perSecond": 28,
+          "p95": 200.7,
+          "errors": 0
+        },
+        {
+          "mixed": false,
+          "clients": 16,
+          "calls": 640,
+          "perSecond": 32,
+          "p95": 786.2,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 1,
+          "calls": 40,
+          "perSecond": 10,
+          "p95": 162.6,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 4,
+          "calls": 160,
+          "perSecond": 30,
+          "p95": 207.3,
+          "errors": 0
+        },
+        {
+          "mixed": true,
+          "clients": 16,
+          "calls": 640,
+          "perSecond": 56,
+          "p95": 647.6,
+          "errors": 0
+        }
+      ],
+      "scaled": {
+        "loadSeconds": 166.2,
+        "retrieval": {
+          "n": 177,
+          "title": {
+            "hit1": 168,
+            "hit3": 173,
+            "mrr": 0.96
+          },
+          "summary": {
+            "hit1": 176,
+            "hit3": 177,
+            "mrr": 1
+          }
+        },
+        "latency": {
+          "orient": {
+            "p50": 15.2,
+            "p95": 20.5
+          },
+          "search": {
+            "p50": 120.7,
+            "p95": 195.6
+          },
+          "get": {
+            "p50": 14.7,
+            "p95": 17.4
+          },
+          "recent": {
+            "p50": 30.6,
+            "p95": 40.8
+          }
+        },
+        "concurrency": [
+          {
+            "mixed": false,
+            "clients": 1,
+            "calls": 40,
+            "perSecond": 7,
+            "p95": 209.5,
+            "errors": 0
+          },
+          {
+            "mixed": false,
+            "clients": 4,
+            "calls": 160,
+            "perSecond": 33,
+            "p95": 152.2,
+            "errors": 0
+          },
+          {
+            "mixed": false,
+            "clients": 16,
+            "calls": 640,
+            "perSecond": 59,
+            "p95": 390.8,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 1,
+            "calls": 40,
+            "perSecond": 11,
+            "p95": 145.4,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 4,
+            "calls": 160,
+            "perSecond": 41,
+            "p95": 151.4,
+            "errors": 0
+          },
+          {
+            "mixed": true,
+            "clients": 16,
+            "calls": 640,
+            "perSecond": 77,
+            "p95": 375.3,
+            "errors": 0
+          }
+        ]
+      }
+    }
+  }
+}

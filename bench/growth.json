@@ -1,0 +1,118 @@
+{
+  "counter": "claude-haiku-5-5 count_tokens",
+  "exactTokens": true,
+  "questions": 40,
+  "overhead": 2631,
+  "steps": [
+    {
+      "nodes": 82,
+      "wholeFileTokens": 15476,
+      "perQuestion": {
+        "mcpdia": {
+          "median": 668,
+          "found": 40
+        },
+        "index-then-file": {
+          "median": 2660,
+          "found": 40
+        },
+        "grep-then-file": {
+          "median": 3003,
+          "found": 36
+        },
+        "whole-file": {
+          "median": 15476,
+          "found": 40
+        }
+      }
+    },
+    {
+      "nodes": 200,
+      "wholeFileTokens": 33910,
+      "perQuestion": {
+        "mcpdia": {
+          "median": 669,
+          "found": 40
+        },
+        "index-then-file": {
+          "median": 5228,
+          "found": 40
+        },
+        "grep-then-file": {
+          "median": 5555,
+          "found": 35
+        },
+        "whole-file": {
+          "median": 33910,
+          "found": 40
+        }
+      }
+    },
+    {
+      "nodes": 400,
+      "wholeFileTokens": 65033,
+      "perQuestion": {
+        "mcpdia": {
+          "median": 661,
+          "found": 40
+        },
+        "index-then-file": {
+          "median": 9724,
+          "found": 40
+        },
+        "grep-then-file": {
+          "median": 10147,
+          "found": 32
+        },
+        "whole-file": {
+          "median": 65033,
+          "found": 40
+        }
+      }
+    },
+    {
+      "nodes": 800,
+      "wholeFileTokens": 126797,
+      "perQuestion": {
+        "mcpdia": {
+          "median": 661,
+          "found": 40
+        },
+        "index-then-file": {
+          "median": 18472,
+          "found": 40
+        },
+        "grep-then-file": {
+          "median": 18923,
+          "found": 34
+        },
+        "whole-file": {
+          "median": 126797,
+          "found": 40
+        }
+      }
+    },
+    {
+      "nodes": 1600,
+      "wholeFileTokens": 250471,
+      "perQuestion": {
+        "mcpdia": {
+          "median": 661,
+          "found": 40
+        },
+        "index-then-file": {
+          "median": 36223,
+          "found": 40
+        },
+        "grep-then-file": {
+          "median": 36577,
+          "found": 33
+        },
+        "whole-file": {
+          "median": 250471,
+          "found": 40
+        }
+      }
+    }
+  ]
+}

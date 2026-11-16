@@ -88,7 +88,10 @@ export function parseRef(ctx: Context, input: string): Ref {
   return { kind: 'key', namespace: ctx.writeNamespace, key: value };
 }
 
-/** Keys are shown bare while one namespace is visible, qualified otherwise. */
+/**
+ * Keys in the write namespace are shown bare, since a bare key resolves there
+ * (parseRef); keys in any other namespace are qualified, e.g. `mcpdia:concept/x`.
+ */
 export function displayKey(ctx: Context, namespace: string, key: string): string {
-  return ctx.namespaces.length === 1 && namespace === ctx.namespaces[0] ? key : `${namespace}:${key}`;
+  return namespace === ctx.writeNamespace ? key : `${namespace}:${key}`;
 }

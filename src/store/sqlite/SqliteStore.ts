@@ -25,6 +25,8 @@ import { migrate } from './migrate.js';
 /** The only place SQL lives (ADR 0001). */
 export class SqliteStore implements GraphStore {
   private readonly db: Database.Database;
+  /** Prepared statements by SQL text. better-sqlite3 never frees a statement, so each one is made once. */
+  private readonly statements = new Map<string, Database.Statement>();
 
   /** `path` is a file path, or ':memory:' for tests. */
   constructor(path: string) {
@@ -35,8 +37,22 @@ export class SqliteStore implements GraphStore {
     migrate(this.db);
   }
 
+  /**
+   * The cached statement for `sql`. SQL built from a list (`IN (?, ?, …)`) has one
+   * shape per list length, so the cache is cleared when it grows past STATEMENT_CACHE.
+   */
+  private prepare(sql: string): Database.Statement {
+    let statement = this.statements.get(sql);
+    if (!statement) {
+      if (this.statements.size >= STATEMENT_CACHE) this.statements.clear();
+      statement = this.db.prepare(sql);
+      this.statements.set(sql, statement);
+    }
+    return statement;
+  }
+
   async getNode(namespace: string, key: string): Promise<NodeRecord | null> {
-    const row = this.db.prepare('SELECT * FROM nodes WHERE namespace = ? AND key = ?').get(namespace, key);
+    const row = this.prepare('SELECT * FROM nodes WHERE namespace = ? AND key = ?').get(namespace, key);
     return row ? this.hydrate([row as NodeRow])[0]! : null;
   }
 
@@ -46,7 +62,7 @@ export class SqliteStore implements GraphStore {
 
   async getNodesByIds(ids: string[]): Promise<Map<string, NodeRecord>> {
     if (ids.length === 0) return new Map();
-    const rows = this.db.prepare(`SELECT * FROM nodes WHERE id IN (${marks(ids)})`).all(...ids) as NodeRow[];
+    const rows = this.prepare(`SELECT * FROM nodes WHERE id IN (${marks(ids)})`).all(...ids) as NodeRow[];
     return new Map(this.hydrate(rows).map((n) => [n.id, n]));
   }
 
@@ -54,27 +70,25 @@ export class SqliteStore implements GraphStore {
     const id = ulid();
     const now = new Date().toISOString();
     this.db.transaction(() => {
-      this.db
-        .prepare(
-          `INSERT INTO nodes (id, namespace, key, type, title, summary, body, properties,
+      this.prepare(
+        `INSERT INTO nodes (id, namespace, key, type, title, summary, body, properties,
                               source, author, updated_by, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          id,
-          node.namespace,
-          node.key,
-          node.type,
-          node.title,
-          node.summary,
-          node.body,
-          JSON.stringify(node.properties),
-          node.source,
-          node.author,
-          node.author,
-          now,
-          now,
-        );
+      ).run(
+        id,
+        node.namespace,
+        node.key,
+        node.type,
+        node.title,
+        node.summary,
+        node.body,
+        JSON.stringify(node.properties),
+        node.source,
+        node.author,
+        node.author,
+        now,
+        now,
+      );
       this.writeAliasesAndTags(id, node.aliases, node.tags);
       this.recordVersion(id, 'create', node.author, now);
       // Late-bound edges (ADR 0007): anything already pointing at this key now resolves.
@@ -86,29 +100,27 @@ export class SqliteStore implements GraphStore {
   async updateNode(id: string, patch: NodePatch, changedBy: string, expectedVersion?: number): Promise<NodeRecord> {
     const now = new Date().toISOString();
     this.db.transaction(() => {
-      const current = this.hydrate([this.db.prepare('SELECT * FROM nodes WHERE id = ?').get(id) as NodeRow])[0]!;
+      const current = this.hydrate([this.prepare('SELECT * FROM nodes WHERE id = ?').get(id) as NodeRow])[0]!;
       if (expectedVersion !== undefined && current.version !== expectedVersion) {
         throw new VersionConflictError(current);
       }
-      this.db
-        .prepare(
-          `UPDATE nodes SET type = ?, title = ?, summary = ?, body = ?, properties = ?,
+      this.prepare(
+        `UPDATE nodes SET type = ?, title = ?, summary = ?, body = ?, properties = ?,
                   version = version + 1, updated_by = ?, updated_at = ?, last_wrong_at = NULL
             WHERE id = ?`,
-        )
-        .run(
-          patch.type ?? current.type,
-          patch.title ?? current.title,
-          patch.summary !== undefined ? patch.summary : current.summary,
-          patch.body !== undefined ? patch.body : current.body,
-          JSON.stringify(patch.properties ?? current.properties),
-          changedBy,
-          now,
-          id,
-        );
+      ).run(
+        patch.type ?? current.type,
+        patch.title ?? current.title,
+        patch.summary !== undefined ? patch.summary : current.summary,
+        patch.body !== undefined ? patch.body : current.body,
+        JSON.stringify(patch.properties ?? current.properties),
+        changedBy,
+        now,
+        id,
+      );
       if (patch.aliases !== undefined || patch.tags !== undefined) {
-        if (patch.aliases !== undefined) this.db.prepare('DELETE FROM node_aliases WHERE node_id = ?').run(id);
-        if (patch.tags !== undefined) this.db.prepare('DELETE FROM node_tags WHERE node_id = ?').run(id);
+        if (patch.aliases !== undefined) this.prepare('DELETE FROM node_aliases WHERE node_id = ?').run(id);
+        if (patch.tags !== undefined) this.prepare('DELETE FROM node_tags WHERE node_id = ?').run(id);
         this.writeAliasesAndTags(id, patch.aliases ?? [], patch.tags ?? []);
       }
       this.recordVersion(id, 'update', changedBy, now);
@@ -120,16 +132,14 @@ export class SqliteStore implements GraphStore {
     const now = new Date().toISOString();
     const changeType = status === 'active' ? 'restore' : status === 'superseded' ? 'supersede' : 'delete';
     this.db.transaction(() => {
-      this.db
-        .prepare(
-          `UPDATE nodes SET status = ?, superseded_by = ?, version = version + 1, updated_by = ?, updated_at = ?
+      this.prepare(
+        `UPDATE nodes SET status = ?, superseded_by = ?, version = version + 1, updated_by = ?, updated_at = ?
             WHERE id = ?`,
-        )
-        .run(status, status === 'superseded' ? (supersededBy ?? null) : null, changedBy, now, id);
+      ).run(status, status === 'superseded' ? (supersededBy ?? null) : null, changedBy, now, id);
       this.recordVersion(id, changeType, changedBy, now);
       if (status === 'active') {
         // Links made while it was deleted were stored unresolved (resolveId skips deleted nodes).
-        const row = this.db.prepare('SELECT namespace, key FROM nodes WHERE id = ?').get(id) as
+        const row = this.prepare('SELECT namespace, key FROM nodes WHERE id = ?').get(id) as
           { namespace: string; key: string } | undefined;
         if (row) this.resolveWaitingEdges(id, row.namespace, row.key);
       }
@@ -139,9 +149,10 @@ export class SqliteStore implements GraphStore {
 
   async markVerified(ids: string[], at: string): Promise<void> {
     if (ids.length === 0) return;
-    this.db
-      .prepare(`UPDATE nodes SET last_verified_at = ?, last_wrong_at = NULL WHERE id IN (${marks(ids)})`)
-      .run(at, ...ids);
+    this.prepare(`UPDATE nodes SET last_verified_at = ?, last_wrong_at = NULL WHERE id IN (${marks(ids)})`).run(
+      at,
+      ...ids,
+    );
   }
 
   async recordFeedback(ids: string[], verdict: FeedbackVerdict, at: string): Promise<void> {
@@ -152,7 +163,7 @@ export class SqliteStore implements GraphStore {
       outdated_or_wrong: 'wrong_count = wrong_count + 1, last_wrong_at = ?',
     }[verdict];
     const params = verdict === 'not_useful' ? ids : [at, ...ids];
-    this.db.prepare(`UPDATE nodes SET ${set} WHERE id IN (${marks(ids)})`).run(...params);
+    this.prepare(`UPDATE nodes SET ${set} WHERE id IN (${marks(ids)})`).run(...params);
   }
 
   async recent(q: RecentQuery): Promise<RecentEntry[]> {
@@ -169,9 +180,9 @@ export class SqliteStore implements GraphStore {
       where.push('updated_by = ?');
       params.push(q.updatedBy);
     }
-    const rows = this.db
-      .prepare(`SELECT * FROM nodes WHERE ${where.join(' AND ')} ORDER BY ${at} DESC, id DESC LIMIT ?`)
-      .all(...params, q.limit) as NodeRow[];
+    const rows = this.prepare(
+      `SELECT * FROM nodes WHERE ${where.join(' AND ')} ORDER BY ${at} DESC, id DESC LIMIT ?`,
+    ).all(...params, q.limit) as NodeRow[];
     return this.hydrate(rows).map((node) => {
       if (node.lastUsefulAt && node.lastUsefulAt > node.updatedAt)
         return { node, kind: 'useful', at: node.lastUsefulAt };
@@ -183,17 +194,18 @@ export class SqliteStore implements GraphStore {
     const now = new Date().toISOString();
     let moved = 0;
     this.db.transaction(() => {
-      const rows = this.db
-        .prepare(`SELECT * FROM edges WHERE status = 'active' AND (from_id = ? OR to_id = ?)`)
-        .all(oldId, oldId) as EdgeRow[];
-      const duplicate = this.db.prepare(
+      const rows = this.prepare(`SELECT * FROM edges WHERE status = 'active' AND (from_id = ? OR to_id = ?)`).all(
+        oldId,
+        oldId,
+      ) as EdgeRow[];
+      const duplicate = this.prepare(
         `SELECT 1 FROM edges WHERE status = 'active' AND id != ? AND from_namespace = ? AND from_key = ?
            AND to_namespace = ? AND to_key = ? AND type = ?`,
       );
-      const retire = this.db.prepare(
+      const retire = this.prepare(
         `UPDATE edges SET status = 'deleted', version = version + 1, updated_at = ? WHERE id = ?`,
       );
-      const move = this.db.prepare(
+      const move = this.prepare(
         `UPDATE edges SET from_namespace = ?, from_key = ?, from_id = ?, to_namespace = ?, to_key = ?, to_id = ?,
                 version = version + 1, updated_at = ?
           WHERE id = ?`,
@@ -239,67 +251,67 @@ export class SqliteStore implements GraphStore {
 
     // bm25 is negative (lower is better). Column weights: title, summary, body, aliases, tags.
     // Nodes marked useful get at most a 10% boost (ADR 0005: keep it small).
-    const rows = this.db
-      .prepare(
-        `SELECT n.* ${from}
+    const rows = this.prepare(
+      `SELECT n.* ${from}
          ORDER BY bm25(nodes_fts, 10.0, 5.0, 1.0, 5.0, 3.0) * (1.0 + 0.1 * min(n.useful_count, 5) / 5.0)
          LIMIT ?`,
-      )
-      .all(...params, q.limit) as NodeRow[];
-    const { total } = this.db.prepare(`SELECT count(*) AS total ${from}`).get(...params) as { total: number };
+    ).all(...params, q.limit) as NodeRow[];
+    const { total } = this.prepare(`SELECT count(*) AS total ${from}`).get(...params) as { total: number };
     return { nodes: this.hydrate(rows), total };
   }
 
   async upsertEdge(edge: NewEdge): Promise<{ edge: EdgeRecord; created: boolean }> {
     const now = new Date().toISOString();
-    const existing = this.db
-      .prepare(
-        `SELECT * FROM edges WHERE status = 'active' AND from_namespace = ? AND from_key = ?
+    const existing = this.prepare(
+      `SELECT * FROM edges WHERE status = 'active' AND from_namespace = ? AND from_key = ?
            AND to_namespace = ? AND to_key = ? AND type = ?`,
-      )
-      .get(edge.fromNamespace, edge.fromKey, edge.toNamespace, edge.toKey, edge.type) as EdgeRow | undefined;
+    ).get(edge.fromNamespace, edge.fromKey, edge.toNamespace, edge.toKey, edge.type) as EdgeRow | undefined;
 
     if (existing) {
       if (edge.note !== null && edge.note !== existing.note) {
-        this.db
-          .prepare('UPDATE edges SET note = ?, version = version + 1, updated_at = ? WHERE id = ?')
-          .run(edge.note, now, existing.id);
+        this.prepare('UPDATE edges SET note = ?, version = version + 1, updated_at = ? WHERE id = ?').run(
+          edge.note,
+          now,
+          existing.id,
+        );
       }
       return { edge: this.edgeById(existing.id), created: false };
     }
 
     const id = ulid();
-    this.db
-      .prepare(
-        `INSERT INTO edges (id, from_namespace, from_key, to_namespace, to_key, from_id, to_id,
+    this.prepare(
+      `INSERT INTO edges (id, from_namespace, from_key, to_namespace, to_key, from_id, to_id,
                             type, note, source, author, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        id,
-        edge.fromNamespace,
-        edge.fromKey,
-        edge.toNamespace,
-        edge.toKey,
-        this.resolveId(edge.fromNamespace, edge.fromKey),
-        this.resolveId(edge.toNamespace, edge.toKey),
-        edge.type,
-        edge.note,
-        edge.source,
-        edge.author,
-        now,
-        now,
-      );
+    ).run(
+      id,
+      edge.fromNamespace,
+      edge.fromKey,
+      edge.toNamespace,
+      edge.toKey,
+      this.resolveId(edge.fromNamespace, edge.fromKey),
+      this.resolveId(edge.toNamespace, edge.toKey),
+      edge.type,
+      edge.note,
+      edge.source,
+      edge.author,
+      now,
+      now,
+    );
     return { edge: this.edgeById(id), created: true };
   }
 
+  async deleteEdge(id: string): Promise<void> {
+    this.prepare(
+      `UPDATE edges SET status = 'deleted', version = version + 1, updated_at = ? WHERE id = ? AND status = 'active'`,
+    ).run(new Date().toISOString(), id);
+  }
+
   async neighbors(nodeId: string): Promise<Neighbor[]> {
-    const rows = this.db
-      .prepare(
-        `SELECT * FROM edges WHERE status = 'active' AND (from_id = ? OR to_id = ?)
+    const rows = this.prepare(
+      `SELECT * FROM edges WHERE status = 'active' AND (from_id = ? OR to_id = ?)
          ORDER BY type, created_at`,
-      )
-      .all(nodeId, nodeId) as EdgeRow[];
+    ).all(nodeId, nodeId) as EdgeRow[];
     const edges = rows.map(toEdge);
     const otherIds = edges
       .map((e) => (e.fromId === nodeId ? e.toId : e.fromId))
@@ -322,73 +334,74 @@ export class SqliteStore implements GraphStore {
 
   async edgeCounts(nodeIds: string[]): Promise<Map<string, number>> {
     if (nodeIds.length === 0) return new Map();
-    const rows = this.db
-      .prepare(
-        `SELECT n.id AS id,
+    const rows = this.prepare(
+      `SELECT n.id AS id,
                 (SELECT count(*) FROM edges e
                   WHERE e.status = 'active' AND (e.from_id = n.id OR e.to_id = n.id)) AS count
            FROM nodes n WHERE n.id IN (${marks(nodeIds)})`,
-      )
-      .all(...nodeIds) as { id: string; count: number }[];
+    ).all(...nodeIds) as { id: string; count: number }[];
     return new Map(rows.map((r) => [r.id, r.count]));
+  }
+
+  async linksInto(nodeIds: string[], type: string): Promise<Map<string, { namespace: string; key: string }[]>> {
+    if (nodeIds.length === 0) return new Map();
+    const rows = this.prepare(
+      `SELECT e.to_id AS id, e.from_namespace AS namespace, e.from_key AS key
+         FROM edges e JOIN nodes f ON f.id = e.from_id
+        WHERE e.status = 'active' AND f.status = 'active' AND e.type = ? AND e.to_id IN (${marks(nodeIds)})
+        ORDER BY e.created_at, e.rowid`,
+    ).all(type, ...nodeIds) as { id: string; namespace: string; key: string }[];
+    return groupById(rows);
   }
 
   // Rows made in the same millisecond tie on created_at, and ULIDs are random within a
   // millisecond, so rowid (insertion order) breaks the tie.
   async listNodes(namespaces: string[]): Promise<NodeRecord[]> {
     if (namespaces.length === 0) return [];
-    const rows = this.db
-      .prepare(`SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, rowid`)
-      .all(...namespaces) as NodeRow[];
+    const rows = this.prepare(
+      `SELECT * FROM nodes WHERE namespace IN (${marks(namespaces)}) ORDER BY created_at, rowid`,
+    ).all(...namespaces) as NodeRow[];
     return this.hydrate(rows);
   }
 
   async listEdges(namespaces: string[]): Promise<EdgeRecord[]> {
     if (namespaces.length === 0) return [];
-    const rows = this.db
-      .prepare(
-        `SELECT * FROM edges WHERE status = 'active' AND from_namespace IN (${marks(namespaces)})
+    const rows = this.prepare(
+      `SELECT * FROM edges WHERE status = 'active' AND from_namespace IN (${marks(namespaces)})
          ORDER BY created_at, rowid`,
-      )
-      .all(...namespaces) as EdgeRow[];
+    ).all(...namespaces) as EdgeRow[];
     return rows.map(toEdge);
   }
 
   async stats(namespaces: string[]): Promise<GraphStats> {
     if (namespaces.length === 0) return { nodes: 0, nodeTypes: [], edgeTypes: [] };
     const ns = marks(namespaces);
-    const nodeTypes = this.db
-      .prepare(
-        `SELECT type AS name, count(*) AS count FROM nodes
+    const nodeTypes = this.prepare(
+      `SELECT type AS name, count(*) AS count FROM nodes
           WHERE status = 'active' AND namespace IN (${ns})
           GROUP BY type ORDER BY count DESC, type`,
-      )
-      .all(...namespaces) as { name: string; count: number }[];
-    const edgeTypes = this.db
-      .prepare(
-        `SELECT type AS name, count(*) AS count FROM edges
+    ).all(...namespaces) as { name: string; count: number }[];
+    const edgeTypes = this.prepare(
+      `SELECT type AS name, count(*) AS count FROM edges
           WHERE status = 'active' AND from_namespace IN (${ns})
           GROUP BY type ORDER BY count DESC, type`,
-      )
-      .all(...namespaces) as { name: string; count: number }[];
+    ).all(...namespaces) as { name: string; count: number }[];
     return { nodes: nodeTypes.reduce((sum, t) => sum + t.count, 0), nodeTypes, edgeTypes };
   }
 
   async getSettings(namespaces: string[], key: string): Promise<SettingRow[]> {
     if (namespaces.length === 0) return [];
-    const rows = this.db
-      .prepare(`SELECT namespace, scope, value FROM settings WHERE key = ? AND namespace IN (${marks(namespaces)})`)
-      .all(key, ...namespaces) as { namespace: string; scope: string; value: string }[];
+    const rows = this.prepare(
+      `SELECT namespace, scope, value FROM settings WHERE key = ? AND namespace IN (${marks(namespaces)})`,
+    ).all(key, ...namespaces) as { namespace: string; scope: string; value: string }[];
     return rows.map((r) => ({ namespace: r.namespace, scope: r.scope, value: JSON.parse(r.value) }));
   }
 
   async putSetting(namespace: string, scope: string, key: string, value: unknown): Promise<void> {
-    this.db
-      .prepare(
-        `INSERT INTO settings (namespace, scope, key, value, updated_at) VALUES (?, ?, ?, ?, ?)
+    this.prepare(
+      `INSERT INTO settings (namespace, scope, key, value, updated_at) VALUES (?, ?, ?, ?, ?)
          ON CONFLICT (namespace, scope, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-      )
-      .run(namespace, scope, key, JSON.stringify(value), new Date().toISOString());
+    ).run(namespace, scope, key, JSON.stringify(value), new Date().toISOString());
   }
 
   async close(): Promise<void> {
@@ -398,41 +411,44 @@ export class SqliteStore implements GraphStore {
   // --- helpers ---------------------------------------------------------
 
   private writeAliasesAndTags(id: string, aliases: string[], tags: string[]): void {
-    const alias = this.db.prepare('INSERT OR IGNORE INTO node_aliases (node_id, alias) VALUES (?, ?)');
+    const alias = this.prepare('INSERT OR IGNORE INTO node_aliases (node_id, alias) VALUES (?, ?)');
     for (const a of aliases) alias.run(id, a);
-    const tag = this.db.prepare('INSERT OR IGNORE INTO node_tags (node_id, tag) VALUES (?, ?)');
+    const tag = this.prepare('INSERT OR IGNORE INTO node_tags (node_id, tag) VALUES (?, ?)');
     for (const t of tags) tag.run(id, t);
   }
 
   /** Snapshot of the node as it stands now, stored under its current version. */
   private recordVersion(id: string, changeType: string, changedBy: string, at: string): void {
-    const node = this.hydrate([this.db.prepare('SELECT * FROM nodes WHERE id = ?').get(id) as NodeRow])[0]!;
-    this.db
-      .prepare(
-        `INSERT INTO node_versions (node_id, version, snapshot, body_len, change_type, changed_by, changed_at)
+    const node = this.hydrate([this.prepare('SELECT * FROM nodes WHERE id = ?').get(id) as NodeRow])[0]!;
+    this.prepare(
+      `INSERT INTO node_versions (node_id, version, snapshot, body_len, change_type, changed_by, changed_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(id, node.version, JSON.stringify(node), node.body?.length ?? 0, changeType, changedBy, at);
+    ).run(id, node.version, JSON.stringify(node), node.body?.length ?? 0, changeType, changedBy, at);
   }
 
   private resolveWaitingEdges(id: string, namespace: string, key: string): void {
-    this.db
-      .prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL')
-      .run(id, namespace, key);
-    this.db
-      .prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL')
-      .run(id, namespace, key);
+    this.prepare('UPDATE edges SET to_id = ? WHERE to_namespace = ? AND to_key = ? AND to_id IS NULL').run(
+      id,
+      namespace,
+      key,
+    );
+    this.prepare('UPDATE edges SET from_id = ? WHERE from_namespace = ? AND from_key = ? AND from_id IS NULL').run(
+      id,
+      namespace,
+      key,
+    );
   }
 
   private resolveId(namespace: string, key: string): string | null {
-    const row = this.db
-      .prepare(`SELECT id FROM nodes WHERE namespace = ? AND key = ? AND status != 'deleted'`)
-      .get(namespace, key) as { id: string } | undefined;
+    const row = this.prepare(`SELECT id FROM nodes WHERE namespace = ? AND key = ? AND status != 'deleted'`).get(
+      namespace,
+      key,
+    ) as { id: string } | undefined;
     return row?.id ?? null;
   }
 
   private edgeById(id: string): EdgeRecord {
-    return toEdge(this.db.prepare('SELECT * FROM edges WHERE id = ?').get(id) as EdgeRow);
+    return toEdge(this.prepare('SELECT * FROM edges WHERE id = ?').get(id) as EdgeRow);
   }
 
   /** Row → record, loading aliases and tags in one query each. */
@@ -443,7 +459,7 @@ export class SqliteStore implements GraphStore {
       const found: { node_id: string; v: string }[] = [];
       for (let i = 0; i < rows.length; i += HYDRATE_BATCH) {
         const ids = rows.slice(i, i + HYDRATE_BATCH).map((r) => r.id);
-        found.push(...(this.db.prepare(sql(marks(ids))).all(...ids) as { node_id: string; v: string }[]));
+        found.push(...(this.prepare(sql(marks(ids))).all(...ids) as { node_id: string; v: string }[]));
       }
       return groupBy(found);
     };
@@ -541,6 +557,7 @@ function toEdge(r: EdgeRow): EdgeRecord {
 
 // Ids per lookup in hydrate(), well under SQLite's 32,766 variable limit.
 const HYDRATE_BATCH = 10_000;
+const STATEMENT_CACHE = 500;
 
 function marks(values: readonly unknown[]): string {
   return values.map(() => '?').join(', ');
@@ -554,4 +571,12 @@ function groupBy(rows: unknown[]): Map<string, string[]> {
     out.set(row.node_id, list);
   }
   return out;
+}
+
+function groupById(
+  rows: { id: string; namespace: string; key: string }[],
+): Map<string, { namespace: string; key: string }[]> {
+  const byId = new Map<string, { namespace: string; key: string }[]>();
+  for (const { id, namespace, key } of rows) byId.set(id, [...(byId.get(id) ?? []), { namespace, key }]);
+  return byId;
 }

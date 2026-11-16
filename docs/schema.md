@@ -1,6 +1,6 @@
 # Schema (first pass)
 
-Status: **draft for discussion.** Written in SQLite dialect. The Postgres adapter will map types (`TEXT` timestamps to `timestamptz`, JSON text to `jsonb`) but keeps the same shape. This would become `migrations/001_init.sql`.
+Written in SQLite dialect; the live files are `src/store/sqlite/migrations/`. The Postgres store (`src/store/postgres/migrations/`, ADR 0025) keeps the same shape with three changes: JSON is `jsonb`, aliases and tags are sorted `text[]` columns on `nodes` instead of the `node_aliases` and `node_tags` tables, and a `seq` column keeps insertion order. Timestamps stay ISO text in both.
 
 ## Conventions
 
@@ -146,19 +146,29 @@ CREATE TABLE schema_migrations (
 );
 ```
 
-### Full-text search (SQLite adapter only)
+### Full-text search
 
-Search is a method on `GraphStore`, so its implementation is private to each adapter. In SQLite it is an FTS5 virtual table over title, summary, body, aliases, and tags, kept in sync by triggers. In Postgres it becomes a generated `tsvector` column with a GIN index. Nothing above the store layer depends on either.
+Search is a method on `GraphStore`, so its implementation is private to each adapter. In SQLite it is an FTS5 virtual table over title, summary, body, aliases, and tags, kept in sync by triggers. In Postgres it is a weighted `tsvector` column on `nodes`, kept by a trigger, with a GIN index and English stemming without stop words. Nothing above the store layer depends on either.
 
 ### JSONL export format
 
-`mcpdia export [--namespace ns]... [--all-status] [--out file]` writes the graph as JSON Lines (stdout when `--out` is omitted). It is store-agnostic: the core builds it from `GraphStore.listNodes` and `listEdges`, and v0.2 import reads it back.
+`mcpdia export [--namespace ns]... [--tag tag]... [--all-status] [--out file]` writes the graph as JSON Lines (stdout when `--out` is omitted). With no `--namespace` it exports the write namespace only: your own graph, not the starter sets or other namespaces you read. The HTTP server serves the same at `GET /export?namespace=…&tag=…`. It is store-agnostic: the core builds it from `GraphStore.listNodes` and `listEdges`. Starter sets and `mcpdia seed` read it back (ADR 0026), and v0.2 merge import will too.
 
-1. One `header` line: `{"kind":"header","format":"mcpdia-jsonl","version":1,"exportedAt","namespaces","statuses","nodes","edges"}`.
+1. One `header` line: `{"kind":"header","format":"mcpdia-jsonl","version":1,"exportedAt","namespaces","tags"?,"statuses","nodes","edges"}`. `tags` is there only when the export was filtered by tag.
 2. One `node` line per node in the namespaces, oldest first. Active nodes only; with `--all-status`, superseded and deleted nodes too (the header's `statuses` says which). Fields are the node record in camelCase (`id`, `namespace`, `key`, `type`, `title`, `summary`, `body`, `properties`, `aliases`, `tags`, `status`, `supersededBy`, `version`, `source`, `author`, `updatedBy`, `createdAt`, `updatedAt`, `lastVerifiedAt`, feedback counters).
-3. One `edge` line per **active** edge whose source is in the namespaces: `fromNamespace`, `fromKey`, `toNamespace`, `toKey`, the nullable resolved ids, `type`, `note`, `version`, `author`, timestamps.
+3. One `edge` line per **active** edge whose source is in the namespaces (with `--tag`, only edges whose two ends were both exported): `fromNamespace`, `fromKey`, `toNamespace`, `toKey`, the nullable resolved ids, `type`, `note`, `version`, `author`, timestamps.
 
 Nodes come before edges so an importer can create them first. Importers should match on `(namespace, key)`, not on `id` (ADR 0003). An edge may point at a node that is not in the file; on import it becomes a ghost reference (ADR 0007). Version history is not exported; for a full backup, copy the database file.
+
+### Starter sets
+
+A starter set is an export loaded into a namespace of its own (ADR 0026). Node and edge ends in the export's `namespaces` move to that namespace; ends anywhere else keep theirs. Rows the load writes are stamped `source` and `updated_by` `starter:<name>`.
+
+Each reload is a three-way check per key: base (the version last applied or acknowledged), yours and incoming, hashed on content fields and status. Untouched nodes take the incoming version; nodes you edited stay as they are; when both changed, the load writes a conflict node. Nodes gone from the export are marked `deleted` if untouched, and get a conflict otherwise. Edges the set wrote follow the export; edges you added stay. Nodes you add to a starter namespace yourself are never deleted or flagged by a reload, and a first load refuses a namespace that already holds nodes from elsewhere. An export that repeats a key (one spanning several namespaces) is refused.
+
+A conflict is one node per key: type `conflict`, key `conflict/<node key>` (e.g. `conflict/concept/stubs-first`), in the starter namespace, with properties `starter`, `node_key` and `incoming_hash`, the incoming version in its body (`Removed upstream.` when the export dropped it), and a `conflicts_with` edge to your node. A newer incoming version updates it in place; deleting it marks that version handled, and a later one restores it.
+
+The last load is kept in `settings` under scope `starter`, key `starter.loaded`: `hash` (the export without its `exportedAt`, so an unchanged source is skipped), `source`, `loadedAt`, `nodes` (base hash per key) and `edges` (the edges the set wrote).
 
 ### Reserved for later (not in `001_init`)
 

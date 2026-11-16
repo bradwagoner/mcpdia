@@ -11,6 +11,8 @@
     "step5": "node run.mjs step5",
     "step6": "node run.mjs step6",
     "onefile": "node run.mjs onefile",
+    "multi": "node run.mjs multi",
+    "growth": "node run.mjs growth",
     "export": "node export.mjs"
   },
   "dependencies": {

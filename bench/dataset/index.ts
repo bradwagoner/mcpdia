@@ -7,6 +7,7 @@ import { permissions } from './permissions.js';
 import { product } from './product.js';
 import type { DemoNode } from './types.js';
 
+export { paraphrases, unanswerable } from './paraphrases.js';
 export { questions, type Question } from './questions.js';
 export type { DemoNode } from './types.js';
 
@@ -43,11 +44,8 @@ export const files: { name: string; title: string; about: string }[] = [
   { name: 'operations', title: 'Operations', about: 'runbooks, incidents, team process, glossary' },
 ];
 
-function titleOf(key: string): string {
-  return nodes.find((n) => n.key === key)?.title ?? key;
-}
-
-function section(node: DemoNode): string {
+function section(node: DemoNode, data: DemoNode[]): string {
+  const titleOf = (key: string) => data.find((n) => n.key === key)?.title ?? key;
   const parts = [`## ${node.title}`, node.summary];
   if (node.aliases?.length) parts.push(`Also called: ${node.aliases.join(', ')}.`);
   parts.push(node.body);
@@ -57,10 +55,10 @@ function section(node: DemoNode): string {
 }
 
 /** One topic file, written the way a team would keep a markdown memory file. */
-export function renderFile(name: string): string {
+export function renderFile(name: string, data: DemoNode[] = nodes): string {
   const file = files.find((f) => f.name === name);
   if (!file) throw new Error(`Unknown file ${name}`);
-  const sections = nodes.filter((n) => n.file === name).map(section);
+  const sections = data.filter((n) => n.file === name).map((n) => section(n, data));
   return [`# ${file.title}`, ...sections].join('\n\n') + '\n';
 }
 
@@ -71,16 +69,16 @@ export function renderIndex(): string {
 }
 
 /** Everything in one file, for the whole-file baseline. */
-export function renderWhole(): string {
+export function renderWhole(data: DemoNode[] = nodes): string {
   return [
     '# Kestrel team memory',
-    ...files.map((f) => renderFile(f.name).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
+    ...files.map((f) => renderFile(f.name, data).replace(/^# /, '## ').replace(/\n## /g, '\n### ')),
   ].join('\n\n');
 }
 
 /** Every markdown file as name → content, index first. */
-export function renderMarkdown(): Map<string, string> {
+export function renderMarkdown(data: DemoNode[] = nodes): Map<string, string> {
   const out = new Map<string, string>([['MEMORY.md', renderIndex()]]);
-  for (const f of files) out.set(`${f.name}.md`, renderFile(f.name));
+  for (const f of files) out.set(`${f.name}.md`, renderFile(f.name, data));
   return out;
 }

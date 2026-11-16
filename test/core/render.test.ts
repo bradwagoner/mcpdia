@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SNIPPET_LENGTH, snippet } from '../../src/core/render.js';
+import { SNIPPET_LENGTH, snippet, sortKeys } from '../../src/core/render.js';
 
 // About 370 characters of filler first, so the fact sits past the cut.
 const filler = Array.from({ length: 60 }, (_, i) => `word${i}`).join(' ');
@@ -57,5 +57,12 @@ describe('snippet', () => {
   it('ends without a trailing … when the window reaches the end', () => {
     const out = snippet(`${filler} The end says kst_live_.`, ['live']);
     expect(out).toMatch(/kst_live_\. \(\+\d+ chars\)$/);
+  });
+});
+
+describe('sortKeys', () => {
+  it('sorts object keys at every depth and keeps arrays in order', () => {
+    expect(JSON.stringify(sortKeys({ zz: 1, b: { y: 1, x: 2 }, a: 3 }))).toBe('{"a":3,"b":{"x":2,"y":1},"zz":1}');
+    expect(JSON.stringify(sortKeys({ l: [{ b: 1, a: 2 }, 3] }))).toBe('{"l":[{"a":2,"b":1},3]}');
   });
 });

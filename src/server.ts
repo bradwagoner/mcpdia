@@ -11,6 +11,7 @@ import { registerLink } from './tools/link.js';
 import { registerListTypes } from './tools/listTypes.js';
 import { registerOrient } from './tools/orient.js';
 import { registerRecent } from './tools/recent.js';
+import { registerResolveConflicts } from './tools/resolveConflicts.js';
 import { registerSearch } from './tools/search.js';
 import { registerSupersede } from './tools/supersede.js';
 import { registerUpsert } from './tools/upsert.js';
@@ -44,6 +45,7 @@ export function createServer(store: GraphStore, ctx: Context, options: ServerOpt
   registerFeedback(deps);
   registerRecent(deps);
   registerListTypes(deps);
+  registerResolveConflicts(deps);
   return server;
 }
 

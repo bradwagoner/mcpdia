@@ -44,6 +44,7 @@ export function registerSearch({ server, store, ctx }: Deps): void {
               edgeCount: h.edgeCount,
               matched: h.matched,
               supersededByKey: h.supersededByKey,
+              conflictKey: h.conflictKey,
               terms: out.terms,
             })}`,
         );

@@ -12,7 +12,14 @@ const SRC = resolve(import.meta.dirname, '../src');
 const RULES: { layer: string; forbidden: RegExp[]; why: string }[] = [
   {
     layer: 'core',
-    forbidden: [/^@modelcontextprotocol\//, /^zod$/, /^better-sqlite3$/, /\/tools\//, /\/store\/sqlite\//],
+    forbidden: [
+      /^@modelcontextprotocol\//,
+      /^zod$/,
+      /^better-sqlite3$/,
+      /^pg$/,
+      /\/tools\//,
+      /\/store\/(sqlite|postgres)\//,
+    ],
     why: 'the core knows nothing about MCP or how data is stored',
   },
   {
@@ -22,7 +29,7 @@ const RULES: { layer: string; forbidden: RegExp[]; why: string }[] = [
   },
   {
     layer: 'tools',
-    forbidden: [/^better-sqlite3$/, /\/store\/sqlite\//],
+    forbidden: [/^better-sqlite3$/, /^pg$/, /\/store\/(sqlite|postgres)\//],
     why: 'tools reach storage through the core and the GraphStore interface',
   },
 ];
@@ -54,9 +61,9 @@ describe('layer boundaries (ADR 0001)', () => {
     });
   }
 
-  it('keeps SQL inside src/store/sqlite', () => {
+  it('keeps SQL inside the store adapters', () => {
     const outside = files(SRC)
-      .filter((f) => !relative(SRC, f).replaceAll('\\', '/').startsWith('store/sqlite/'))
+      .filter((f) => !/^store\/(sqlite|postgres)\//.test(relative(SRC, f).replaceAll('\\', '/')))
       .filter((f) => /\b(SELECT|INSERT INTO|UPDATE \w+ SET|DELETE FROM)\b/.test(readFileSync(f, 'utf8')));
     expect(outside.map((f) => relative(SRC, f))).toEqual([]);
   });

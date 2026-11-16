@@ -36,6 +36,29 @@ function read(q) {
   };
 }
 
+/** Several questions in one prompt: the same session pays the fixed cost once and answers them all. */
+function multi(qs) {
+  return {
+    description: `multi: ${qs.length} questions`,
+    vars: {
+      kind: 'read',
+      needle: qs.map((q) => q.needle).join('|'),
+      // More questions need more turns: a search and a get or two each.
+      maxTurns: 6 + 4 * qs.length,
+      prompt:
+        `Using this project's memory, answer each question in one or two sentences, numbered: ` +
+        qs.map((q, i) => `${i + 1}) ${q.question}`).join(' '),
+    },
+    assert: qs.map((q) => ({ type: 'icontains', value: q.needle })),
+  };
+}
+
+/** A read against the bigger memory from setup.mjs: the Kestrel facts plus filler, 300 nodes. */
+function grown(q) {
+  const test = read(q);
+  return { ...test, description: `growth-300 ${test.description}`, vars: { ...test.vars, fixture: 'growth-300' } };
+}
+
 function write(w) {
   return {
     description: `write: ${w.needle}`,
@@ -62,8 +85,14 @@ const STEPS = {
   step6: [...spread.map(read), ...WRITES.map(write)],
   // The step 5 miss behind ADR 0020, alone, to check the snippet fix.
   keyprefix: [read(questions.find((q) => q.needle === 'kst_live_'))],
+  // P1 (ADR 0024): one session, several questions.
+  multi: [multi(spread.slice(0, 3)), multi(spread)],
+  // P3: the step 6 reads, on a memory grown to 300 nodes.
+  growth: spread.map(grown),
 };
 STEPS.onefile = STEPS.step6;
+STEPS.multicheck = STEPS.multi;
+STEPS.growthcheck = STEPS.growth;
 
 export default function tests() {
   const step = process.env.MCPDIA_BENCH_STEP ?? 'check';

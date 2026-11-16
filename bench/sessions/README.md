@@ -2,6 +2,8 @@
 
 Real Claude sessions answer the same questions and record the same facts twice: once with MCPdia, once with markdown memory files (a `CLAUDE.md` index that loads at session start, plus topic files read on demand). Both sides start from the Kestrel dataset in `../dataset`, and every session gets a fresh copy, so one session's writes never reach the next.
 
+`node run.mjs multi` asks 3 or 8 questions in one prompt instead of one, on all three sides, to see how the fixed cost of each side spreads over a longer session (`multicheck` is its dry run). `node run.mjs growth` asks the step 6 questions of a memory grown to 300 nodes with filler, to see how each side's cost changes as memory grows (`growthcheck` is its dry run).
+
 A third side, `markdown-onefile`, puts the same facts in a single `CLAUDE.md` that loads whole at session start. `node run.mjs onefile` runs the step 6 tests on it alone, to set beside a step 6 run.
 
 ## Run it

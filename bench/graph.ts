@@ -9,6 +9,8 @@ import { typeOf } from './dataset/types.js';
 /** An MCP client wired to a real MCPdia server, so the benchmark reads exactly what a model would. */
 export interface GraphSession {
   client: Client;
+  /** The store behind the server, for bulk loads that would be slow one tool call at a time. */
+  store: SqliteStore;
   /** Calls a tool and returns its text, throwing on a tool error. */
   call(name: string, args: Record<string, unknown>): Promise<string>;
   close(): Promise<void>;
@@ -31,6 +33,7 @@ export async function openSession(dbPath = ':memory:'): Promise<GraphSession> {
 
   return {
     client,
+    store,
     call,
     async close() {
       await client.close();

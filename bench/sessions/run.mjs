@@ -18,6 +18,12 @@ const STEPS = {
   keyprefix: { sides: 'mcpdia|markdown', sessions: 2, estimate: 0.01, cap: 0.05, repeat: 1 },
   // The step 6 tests on the one-file side only, to set beside a step 6 run.
   onefile: { sides: 'markdown-onefile', sessions: 20, estimate: 0.12, cap: 0.5, repeat: 2 },
+  // Sessions that answer 3 or 8 questions each, on all three sides; multicheck is its dry run.
+  multi: { sides: 'mcpdia|markdown|markdown-onefile', sessions: 12, estimate: 0.15, cap: 0.35, repeat: 2 },
+  multicheck: { sides: 'mcpdia|markdown|markdown-onefile', sessions: 6, estimate: 0, cap: 0, repeat: 1, dry: true },
+  // The step 6 reads on a memory of 300 nodes, all three sides; growthcheck is its dry run.
+  growth: { sides: 'mcpdia|markdown|markdown-onefile', sessions: 24, estimate: 0.15, cap: 0.3, repeat: 1 },
+  growthcheck: { sides: 'mcpdia|markdown|markdown-onefile', sessions: 24, estimate: 0, cap: 0, repeat: 1, dry: true },
 };
 
 const [name, ...flags] = process.argv.slice(2);

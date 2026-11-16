@@ -22,6 +22,9 @@
     "start": "node dist/index.js",
     "bench:build": "tsc -p tsconfig.bench.json && node scripts/copy-migrations.mjs dist-bench/src",
     "bench": "npm run bench:build && node dist-bench/bench/run.js",
+    "bench:lookups": "npm run bench:build && node dist-bench/bench/run-lookups.js",
+    "bench:growth": "npm run bench:build && node dist-bench/bench/run-growth.js",
+    "bench:stores": "npm run bench:build && node dist-bench/bench/run-stores.js",
     "demo:markdown": "npm run bench:build && node dist-bench/bench/demo.js markdown",
     "demo:seed": "npm run bench:build && node dist-bench/bench/demo.js seed"
   },
@@ -34,12 +37,15 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "better-sqlite3": "^13.0.3",
+    "pg": "^8.23.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
+    "@electric-sql/pglite": "^0.5.11",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.4",
+    "@types/pg": "^8.23.1",
     "prettier": "^3.9.9",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

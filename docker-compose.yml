@@ -1,0 +1,53 @@
+# MCPdia on Postgres: `docker compose up -d`, then
+#   claude mcp add --transport http mcpdia http://localhost:7411/mcp
+# The read-only graph viewer is at http://localhost:7412.
+# Metrics (ADR 0019): `MCPDIA_METRICS=1 docker compose up -d` logs to the mcpdia-data volume.
+
+name: mcpdia
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: mcpdia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mcpdia}
+      POSTGRES_DB: mcpdia
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'mcpdia', '-d', 'mcpdia']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  mcpdia:
+    build: .
+    image: mcpdia
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MCPDIA_DATABASE_URL: postgres://mcpdia:${POSTGRES_PASSWORD:-mcpdia}@postgres:5432/mcpdia
+      MCPDIA_METRICS: ${MCPDIA_METRICS:-0}
+    ports:
+      - '127.0.0.1:7411:7411'
+    volumes:
+      - mcpdia-data:/data
+    restart: unless-stopped
+
+  viewer:
+    build: ./viewer
+    image: mcpdia-viewer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MCPDIA_DATABASE_URL: postgres://mcpdia:${POSTGRES_PASSWORD:-mcpdia}@postgres:5432/mcpdia
+    ports:
+      - '127.0.0.1:7412:8000'
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mcpdia-data:
