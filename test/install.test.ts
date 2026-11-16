@@ -24,3 +24,13 @@ describe('better-sqlite3 installs without build tools', () => {
     expect(existsSync(join(dirname(pkgPath), 'prebuilds', `${platform}-${process.arch}.node`))).toBe(true);
   });
 });
+
+describe('the published package', () => {
+  it('reports the version in package.json', async () => {
+    const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+      version: string;
+    };
+    const { VERSION } = await import('../src/server.js');
+    expect(VERSION).toBe(version);
+  });
+});
