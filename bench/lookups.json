@@ -807,12 +807,12 @@
       "dbBytes": 479232,
       "loadSeconds": 0.1,
       "searchMs": {
-        "p50": 2.03,
-        "p95": 3.29
+        "p50": 2.02,
+        "p95": 2.92
       },
       "getMs": {
         "p50": 0.11,
-        "p95": 0.19
+        "p95": 0.2
       },
       "otherTopic": {
         "questions": {
@@ -868,15 +868,15 @@
     {
       "distractors": 1000,
       "nodes": 1082,
-      "dbBytes": 3891200,
-      "loadSeconds": 0.9,
+      "dbBytes": 3887104,
+      "loadSeconds": 0.8,
       "searchMs": {
-        "p50": 2.25,
-        "p95": 3.92
+        "p50": 2.15,
+        "p95": 3.74
       },
       "getMs": {
         "p50": 0.11,
-        "p95": 0.21
+        "p95": 0.16
       },
       "otherTopic": {
         "questions": {
@@ -888,11 +888,10 @@
         },
         "paraphrases": {
           "n": 40,
-          "hit1": 26,
-          "hit3": 33,
-          "mrr": 0.7441666666666668,
+          "hit1": 24,
+          "hit3": 34,
+          "mrr": 0.7187499999999999,
           "missed": [
-            "When does a cached permission expire?",
             "How can you tell a production API key from its prefix?",
             "How often do we retry a webhook that failed?",
             "What date did the first API version stop working?",
@@ -950,31 +949,31 @@
     {
       "distractors": 10000,
       "nodes": 10082,
-      "dbBytes": 33103872,
-      "loadSeconds": 12.6,
+      "dbBytes": 33034240,
+      "loadSeconds": 12.8,
       "searchMs": {
-        "p50": 9.63,
-        "p95": 22.29
+        "p50": 8.33,
+        "p95": 21.66
       },
       "getMs": {
-        "p50": 0.15,
-        "p95": 0.24
+        "p50": 0.14,
+        "p95": 0.18
       },
       "otherTopic": {
         "questions": {
           "n": 40,
           "hit1": 33,
           "hit3": 39,
-          "mrr": 0.8958333333333333,
+          "mrr": 0.8944444444444443,
           "missed": [
             "What prefix do live API keys start with?"
           ]
         },
         "paraphrases": {
           "n": 40,
-          "hit1": 23,
-          "hit3": 32,
-          "mrr": 0.6935416666666666,
+          "hit1": 22,
+          "hit3": 31,
+          "mrr": 0.6752380952380952,
           "missed": [
             "When does a cached permission expire?",
             "Can a group contain another group, and how far?",
@@ -983,6 +982,7 @@
             "What date did the first API version stop working?",
             "Where is data for European customers hosted?",
             "How far back can the Postgres database be restored?",
+            "During which hours may migrations that lock tables be applied?",
             "What uptime target does the public API have?"
           ]
         }
@@ -1048,11 +1048,11 @@
     {
       "distractors": 100000,
       "nodes": 100082,
-      "dbBytes": 327254016,
-      "loadSeconds": 597.9,
+      "dbBytes": 326209536,
+      "loadSeconds": 613.8,
       "searchMs": {
-        "p50": 338.82,
-        "p95": 755.16
+        "p50": 330.18,
+        "p95": 807.96
       },
       "getMs": {
         "p50": 0.18,
@@ -1061,9 +1061,9 @@
       "otherTopic": {
         "questions": {
           "n": 40,
-          "hit1": 32,
+          "hit1": 31,
           "hit3": 38,
-          "mrr": 0.8744047619047619,
+          "mrr": 0.8604166666666666,
           "missed": [
             "What prefix do live API keys start with?",
             "What is the API availability SLO?"
@@ -1071,21 +1071,21 @@
         },
         "paraphrases": {
           "n": 40,
-          "hit1": 21,
+          "hit1": 20,
           "hit3": 29,
-          "mrr": 0.6370833333333333,
+          "mrr": 0.61875,
           "missed": [
             "When does a cached permission expire?",
             "Can a group contain another group, and how far?",
             "What is the retention period for the audit log?",
             "How can you tell a production API key from its prefix?",
-            "At what point does an invoice get its number?",
             "How many items can one page of an API list return?",
             "What date did the first API version stop working?",
             "Where is data for European customers hosted?",
             "How far back can the Postgres database be restored?",
             "During which hours may migrations that lock tables be applied?",
-            "What uptime target does the public API have?"
+            "What uptime target does the public API have?",
+            "How long can a data export download link be used?"
           ]
         }
       },
