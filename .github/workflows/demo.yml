@@ -21,8 +21,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
-    env:
-      MCPDIA_DB: ${{ runner.temp }}/demo.db
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +33,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       # Load the starter set the way a user would, into a throwaway database.
+      - run: echo "MCPDIA_DB=$RUNNER_TEMP/demo.db" >> "$GITHUB_ENV"
       - run: node dist/index.js seed starters/mcpdia-starter.jsonl --namespace mcpdia
       - run: npm ci
         working-directory: viewer
