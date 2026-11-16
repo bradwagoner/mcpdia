@@ -1,6 +1,6 @@
 {
   "name": "@bradwagoner/mcpdia",
-  "version": "0.1.0-dev",
+  "version": "0.1.0",
   "description": "Shared glossary and knowledge-graph memory for LLMs, over MCP.",
   "type": "module",
   "license": "MIT",
@@ -26,7 +26,8 @@
     "bench:growth": "npm run bench:build && node dist-bench/bench/run-growth.js",
     "bench:stores": "npm run bench:build && node dist-bench/bench/run-stores.js",
     "demo:markdown": "npm run bench:build && node dist-bench/bench/demo.js markdown",
-    "demo:seed": "npm run bench:build && node dist-bench/bench/demo.js seed"
+    "demo:seed": "npm run bench:build && node dist-bench/bench/demo.js seed",
+    "prepack": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -52,5 +53,16 @@
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bradwagoner/mcpdia.git"
+  },
+  "homepage": "https://github.com/bradwagoner/mcpdia#readme",
+  "bugs": {
+    "url": "https://github.com/bradwagoner/mcpdia/issues"
   }
 }

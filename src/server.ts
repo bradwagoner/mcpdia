@@ -17,7 +17,7 @@ import { registerSupersede } from './tools/supersede.js';
 import { registerUpsert } from './tools/upsert.js';
 import { registerVerify } from './tools/verify.js';
 
-export const VERSION = '0.1.0-dev';
+export const VERSION = '0.1.0';
 
 /** Short on purpose: clients load this every session. */
 const INSTRUCTIONS =
