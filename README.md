@@ -34,6 +34,8 @@ Method: Claude Haiku 5.5, ten read and write tasks against a fictional product t
 
 <!-- Screenshot 1 (hero): docs/images/viewer-tree.png, concept/mcpdia selected with its family tree around it -->
 
+**[Try the live demo](https://bradwagoner.github.io/mcpdia/)**: MCPdia's own notes about itself, in your browser, nothing to install.
+
 Memory you can look at. The graph viewer opens your graph in the browser: every node your LLMs have written, linked the way they linked it, updating live while they work.
 
 - **Click any node** and its family tree gathers around it: parents above, children below, siblings beside, and every other link grouped by type at the sides.
@@ -92,22 +94,23 @@ Your numbers will differ with your machine; the shape holds.
 
 ## Install
 
-Needs Node 22 or later. No build tools: the SQLite driver ships prebuilt.
+Needs Node 22 or later. Nothing to clone and no build tools: the SQLite driver ships prebuilt. Register it with Claude Code:
+
+```bash
+claude mcp add mcpdia -- npx -y @bradwagoner/mcpdia
+```
+
+Other MCP clients take the same command in their config. The graph lives in `~/.mcpdia/mcpdia.db`. Set `MCPDIA_DB` to keep it somewhere else.
+
+To run from source instead:
 
 ```bash
 git clone https://github.com/bradwagoner/mcpdia.git
 cd mcpdia
 npm install
 npm run build
-```
-
-Register it with Claude Code:
-
-```bash
 claude mcp add mcpdia -- node /path/to/mcpdia/dist/index.js
 ```
-
-The graph lives in `~/.mcpdia/mcpdia.db`. Set `MCPDIA_DB` to keep it somewhere else.
 
 ### Run it in Docker
 

@@ -35,6 +35,7 @@ interface ExportedGraph {
   edges: ExportedEdge[];
   pinned?: string[];
   version?: string; // the database version, from the live server
+  selected?: string; // the node a snapshot opens on, until this browser has a saved view
 }
 
 const GHOST_TYPE = '(ghost)';
@@ -55,17 +56,14 @@ const PALETTE = [
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-// Data comes from the live server (`npm start`, which reads the database) or from a file (`?data=...`).
+// Data comes from the live server (`npm start`, which reads the database and marks the page live),
+// from a file (`?data=...`), or from the exported snapshot when the page is hosted as plain files.
 const fileParam = new URLSearchParams(location.search).get('data');
-let dataUrl = fileParam ?? 'api/graph';
+const liveServer = document.querySelector('meta[name="mcpdia-live"]') !== null;
+const dataUrl = fileParam ?? (liveServer ? 'api/graph' : 'data/mcpdia.json');
 async function fetchGraph(): Promise<ExportedGraph> {
   const r = await fetch(dataUrl, { cache: 'no-store' });
   if (r.ok) return r.json();
-  if (!fileParam && dataUrl === 'api/graph') {
-    // Not served by `npm start`: fall back to the exported file.
-    dataUrl = 'data/mcpdia.json';
-    return fetchGraph();
-  }
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
 }
 const live = () => dataUrl === 'api/graph';
@@ -1030,7 +1028,9 @@ function updateStats() {
   const showing = graph.filterNodes((id) => onGraph(id)).length;
   $('stats').textContent =
     `${showing === graph.order ? '' : `${showing.toLocaleString()} of `}${graph.order.toLocaleString()} nodes · ` +
-    (live() ? `live · ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : dataUrl);
+    (live()
+      ? `live · ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+      : (fileParam ?? 'snapshot'));
 }
 updateStats();
 
@@ -1143,6 +1143,8 @@ if (saved) {
   if (saved.selected && graph.hasNode(saved.selected)) select(saved.selected, { keepCamera: true });
   updateStats();
   refresh();
+} else if (firstData.selected && graph.hasNode(firstData.selected)) {
+  select(firstData.selected);
 }
 $<HTMLInputElement>('show-all').onchange = (e) => {
   showEverything = (e.target as HTMLInputElement).checked;

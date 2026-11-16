@@ -1,6 +1,6 @@
 # 0025: Postgres store, HTTP transport and a Docker image
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-22
 
 ## Context

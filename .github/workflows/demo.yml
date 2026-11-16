@@ -1,0 +1,50 @@
+name: Demo
+
+# Publishes the graph viewer to GitHub Pages as plain files, showing the starter set in starters/.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      MCPDIA_DB: ${{ runner.temp }}/demo.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            viewer/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      # Load the starter set the way a user would, into a throwaway database.
+      - run: node dist/index.js seed starters/mcpdia-starter.jsonl --namespace mcpdia
+      - run: npm ci
+        working-directory: viewer
+      - run: npm run build
+        working-directory: viewer
+      - run: node scripts/export-graph.mjs "$MCPDIA_DB" www/data/mcpdia.json --select=mcpdia:concept/mcpdia
+        working-directory: viewer
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: viewer/www
+      - id: deploy
+        uses: actions/deploy-pages@v4

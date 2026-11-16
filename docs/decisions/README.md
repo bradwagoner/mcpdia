@@ -27,9 +27,10 @@ Short records of the significant design decisions in this project: what we chose
 | 0021 | Search tops up short results with partial matches     | Accepted |
 | 0022 | Project name: MCPdia                                  | Accepted |
 | 0023 | The headline comes from live sessions                 | Accepted |
-| 0024 | Lookup tests without a model                          | Proposed |
-| 0025 | Postgres store, HTTP transport and a Docker image     | Proposed |
+| 0024 | Lookup tests without a model                          | Accepted |
+| 0025 | Postgres store, HTTP transport and a Docker image     | Accepted |
 | 0026 | Starter sets loaded on startup                        | Accepted |
+| 0027 | Live demo on GitHub Pages                             | Accepted |
 
 ## Template
 
