@@ -1,6 +1,6 @@
 # 0024: Lookup tests without a model
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-22
 - Builds on: ADR 0023 (the headline comes from live sessions)
 

@@ -33,7 +33,7 @@ Want it on your phone or another computer? `npm start -- --lan` (or `npm run dev
 
 Working on the viewer itself? `npm run dev` does the same as `npm start`, and also rebuilds on save and reloads the page, keeping your view.
 
-For a snapshot instead, `npm run export` writes `www/data/mcpdia.json`; open it with `?data=data/mcpdia.json`.
+For a snapshot instead, `npm run export` writes `www/data/mcpdia.json`. Serve `www/` from any static host and the page reads that file; under `npm start` or `npm run dev`, open it with `?data=data/mcpdia.json`. Add `-- --select=namespace:key` to the export to choose the node a first visit opens on. The [live demo](https://bradwagoner.github.io/mcpdia/) is built this way from `starters/mcpdia-starter.jsonl` ([ADR 0027](../docs/decisions/0027-live-demo-on-github-pages.md)).
 
 For a scale test, `npm run generate -- 10000` writes fake data; open `http://localhost:8000/?data=data/generated-10000.json`.
 

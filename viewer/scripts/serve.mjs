@@ -25,6 +25,7 @@ const types = {
   '.json': 'application/json',
   '.map': 'application/json',
 };
+const LIVE_HEAD = '<head>\n    <meta name="mcpdia-live" />';
 
 const db = await openGraph(source);
 
@@ -55,7 +56,11 @@ const server = createServer(async (req, res) => {
     // Static files from www/, never outside it.
     const file = normalize(join(root, path === '/' ? 'index.html' : decodeURIComponent(path)));
     if (!file.startsWith(root.endsWith(sep) ? root : root + sep)) return send(res, 403, 'text/plain', 'Forbidden');
-    send(res, 200, types[extname(file)] ?? 'application/octet-stream', await readFile(file));
+    const body = await readFile(file);
+    // Mark the page live, so it asks this server for data. Hosted as plain files, it reads the exported snapshot.
+    if (file === join(root, 'index.html'))
+      return send(res, 200, 'text/html', String(body).replace('<head>', LIVE_HEAD));
+    send(res, 200, types[extname(file)] ?? 'application/octet-stream', body);
   } catch (err) {
     send(res, err.code === 'ENOENT' ? 404 : 500, 'text/plain', err.code === 'ENOENT' ? 'Not found' : String(err));
   }

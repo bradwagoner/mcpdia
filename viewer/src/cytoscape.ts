@@ -24,6 +24,7 @@ interface ExportedGraph {
   edges: { from: string; to: string; type: string; note?: string | null }[];
   pinned?: string[];
   version?: string; // the database version, from the live server
+  selected?: string; // the node a snapshot opens on, until this browser has a saved view
 }
 type Mode = 'lists' | 'network';
 type Point = { x: number; y: number };
@@ -54,14 +55,11 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 
 const params = new URLSearchParams(location.search);
 const fileParam = params.get('data');
-let dataUrl = fileParam ?? 'api/graph';
+const liveServer = document.querySelector('meta[name="mcpdia-live"]') !== null;
+const dataUrl = fileParam ?? (liveServer ? 'api/graph' : 'data/mcpdia.json');
 async function fetchGraph(): Promise<ExportedGraph> {
   const r = await fetch(dataUrl, { cache: 'no-store' });
   if (r.ok) return r.json();
-  if (!fileParam && dataUrl === 'api/graph') {
-    dataUrl = 'data/mcpdia.json';
-    return fetchGraph();
-  }
   throw new Error(`Could not load ${dataUrl} (${r.status}). Run "npm start", or "npm run export" then "npm run dev".`);
 }
 const live = () => dataUrl === 'api/graph';
@@ -840,7 +838,9 @@ function updateStats() {
   const total = items().length;
   $('stats').textContent =
     `${showing === total ? '' : `${showing.toLocaleString()} of `}${total.toLocaleString()} nodes · ` +
-    (live() ? `live · ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : dataUrl);
+    (live()
+      ? `live · ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+      : (fileParam ?? 'snapshot'));
 }
 
 // ---------- Remembering the view across reloads ----------
@@ -918,6 +918,7 @@ if (saved) {
   applyFilters();
   cy.viewport({ zoom: saved.camera.zoom, pan: saved.camera.pan });
 } else {
+  if (firstData.selected && node(firstData.selected).nonempty()) select(firstData.selected);
   applyFilters();
   cy.fit(cy.nodes(':visible'), 30);
 }

@@ -317,7 +317,10 @@
       };
       import(cytoscape ? './cytoscape.js' : './viewer.js');
       // `npm run dev` reloads the page after each rebuild. The view is saved on the way out.
-      if (location.protocol.startsWith('http')) new EventSource('api/reload').onmessage = () => location.reload();
+      // Only the viewer's own server has that stream; it marks the page live (scripts/serve.mjs).
+      if (document.querySelector('meta[name="mcpdia-live"]')) {
+        new EventSource('api/reload').onmessage = () => location.reload();
+      }
     </script>
   </body>
 </html>
