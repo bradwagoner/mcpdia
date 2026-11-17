@@ -32,7 +32,7 @@ Method: Claude Haiku 5.5, ten read and write tasks against a fictional product t
 
 ## See what your LLM knows
 
-<!-- Screenshot 1 (hero): docs/images/viewer-tree.png, concept/mcpdia selected with its family tree around it -->
+[![Clicking through nodes in the graph viewer: each one gathers its family tree around it and opens in the detail panel](docs/images/viewer-node.gif)](https://bradwagoner.github.io/mcpdia/)
 
 **[Try the live demo](https://bradwagoner.github.io/mcpdia/)**: MCPdia's own notes about itself, in your browser, nothing to install.
 
@@ -44,7 +44,7 @@ Memory you can look at. The graph viewer opens your graph in the browser: every 
 - **Watch it grow.** New nodes appear next to their neighbors as your LLM writes them, and your selection, search and camera stay put.
 - **Fast on big graphs:** WebGL rendering with Sigma.js, tested at 10,000 nodes. Prefer Cytoscape.js? It's one dropdown away.
 
-<!-- Screenshot 2: docs/images/viewer-search.png, a search with Hide unrelated ticked and the detail panel open -->
+![A search for "install" with the Install MCPdia node open in the detail panel](docs/images/viewer-search.png)
 
 ```bash
 cd viewer
@@ -171,6 +171,12 @@ Every significant choice is written down with its reasoning:
 - [Decision records](docs/decisions/README.md)
 - [Schema](docs/schema.md)
 - [Scope and release diary](docs/SCOPE.md)
+
+## Support
+
+MCPdia is free, MIT-licensed, and built and maintained by one developer. If it saves you tokens, you can [support its development with a tip](https://www.paypal.com/paypalme/bradwagoner1). Any amount helps keep it maintained.
+
+I'm available for hire: [resume (PDF)](https://bradwagoner.com/bradwagoner.pdf).
 
 ## License
 
