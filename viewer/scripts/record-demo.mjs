@@ -75,13 +75,14 @@ async function fresh() {
   await wait(1500);
 }
 
+// A scene that ends on a view worth keeping returns a file name, and that view is saved as a screenshot.
 const scenes = {
   // The family tree around the top node.
   async tree() {
     await wait(800);
     await clickNode('concept/mcpdia');
     await wait(3000);
-    await page.screenshot({ path: join(OUT, 'viewer-tree.png') });
+    return 'viewer-tree.png';
   },
   // Walk down to two nodes and read each in full.
   async node() {
@@ -108,7 +109,7 @@ const scenes = {
     await wait(1800);
     await fullText();
     await wait(4000);
-    await page.screenshot({ path: join(OUT, 'viewer-search.png') });
+    return 'viewer-search.png';
   },
   // Watch it grow: twelve decision records arrive, three at a time, as an agent's writes would.
   async grow() {
@@ -121,7 +122,7 @@ const scenes = {
       await wait(3500); // the page polls every 3 seconds
     }
     await wait(1500);
-    await page.screenshot({ path: join(OUT, 'viewer-grow.png') });
+    return 'viewer-grow.png';
   },
 };
 
@@ -144,8 +145,15 @@ try {
         title: 'display: none',
       },
     });
-    await scenes[name]();
+    const still = await scenes[name]();
     await page.screencast.stop();
+    if (still) {
+      // The click marks and the hover highlight under the pointer belong in the video, not in a still.
+      await page.screencast.hideActions();
+      await page.mouse.move(1, 1);
+      await wait(400);
+      await page.screenshot({ path: join(OUT, still) });
+    }
     if (ffmpeg)
       execFileSync('ffmpeg', ['-y', '-i', video, '-vf', GIF, join(OUT, `viewer-${name}.gif`)], { stdio: 'ignore' });
     console.log(`Recorded ${name}${ffmpeg ? '' : ' (video only: ffmpeg is not on the PATH, so no GIF)'}`);
