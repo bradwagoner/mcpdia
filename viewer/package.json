@@ -24,6 +24,7 @@
   "devDependencies": {
     "esbuild": "^0.28.2",
     "graphology-types": "^0.24.8",
+    "playwright": "^1.65.1",
     "typescript": "^7.0.2"
   },
   "license": "MIT",

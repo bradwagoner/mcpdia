@@ -653,7 +653,7 @@ function nodeLink(id: string) {
   a.style.borderLeft = `4px solid ${node(id).data('color')}`;
   a.onclick = (ev) => {
     ev.preventDefault();
-    select(id, { zoom: true });
+    select(id);
   };
   return a;
 }

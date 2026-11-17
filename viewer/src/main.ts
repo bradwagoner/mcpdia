@@ -843,7 +843,7 @@ function nodeLink(id: string) {
   a.style.borderLeft = `4px solid ${graph.getNodeAttribute(id, 'color')}`;
   a.onclick = (ev) => {
     ev.preventDefault();
-    select(id, { zoom: true });
+    select(id);
   };
   return a;
 }
@@ -1046,6 +1046,8 @@ async function refreshData() {
     const data = await fetchGraph();
     const keepSelected = selected;
     const camera = renderer!.getCamera().getState();
+    // The open tree is rebuilt where it stood, which is not always the selected node's home.
+    const anchor = treeAnchor;
     restoreGroups(false);
     graph.forEachNode((id, a) => mode === 'network' && graph.mergeNodeAttributes(id, { netX: a.x, netY: a.y }));
     const added = applyData(data);
@@ -1064,8 +1066,10 @@ async function refreshData() {
     renderLegend();
     updateStats();
     renderer!.getCamera().setState(camera);
-    if (keepSelected && graph.hasNode(keepSelected)) select(keepSelected, { keepCamera: true });
-    else if (keepSelected) select(null);
+    if (keepSelected && graph.hasNode(keepSelected)) {
+      treeAnchor = anchor;
+      select(keepSelected, { keepCamera: true });
+    } else if (keepSelected) select(null);
     // A search picked from the results keeps its text; rerun it only when nothing is selected.
     if (!selected && searchInput.value.trim()) runSearch(false);
     loadedVersion = data.version ?? loadedVersion;
