@@ -11,3 +11,5 @@ coverage/
 dist-bench/
 bench/.token-cache.json
 bench/.out/
+# Recorded clips (viewer/scripts/record-demo.mjs): the GIFs are what gets shown, the videos stay local.
+docs/images/*.webm
